@@ -1,9 +1,13 @@
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Template, TemplateCategory, SortOption } from './types';
+import { Template, TemplateCategory, SortOption, UserProfile as UserProfileType, Transaction, DownloadRecord } from './types';
 import { TemplateCard } from './components/TemplateCard';
 import { SearchOverlay } from './components/SearchOverlay';
 import { ProductModal } from './components/ProductModal';
+import { AuthPage } from './components/AuthPage';
+import { UserProfile } from './components/UserProfile';
+import { Confetti } from './components/Confetti';
 import { getSmartRecommendations } from './services/geminiService';
 
 // --- MOCK DATA GENERATION ---
@@ -104,11 +108,13 @@ const HeroIllustration = () => (
   <div className="relative w-full h-full min-h-[400px] flex items-center justify-center perspective-1000 pointer-events-none select-none">
     {/* Ambient Gradients - Updated to Warm Tones */}
     <motion.div 
+      initial={{ opacity: 0.3, scale: 1 }}
       animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
       transition={{ duration: 8, repeat: Infinity }}
       className="absolute top-1/4 right-1/4 w-64 h-64 bg-orange-200 rounded-full blur-3xl mix-blend-multiply" 
     />
     <motion.div 
+      initial={{ opacity: 0.3, scale: 1 }}
       animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
       transition={{ duration: 10, repeat: Infinity, delay: 1 }}
       className="absolute bottom-1/4 left-1/4 w-72 h-72 bg-rose-100 rounded-full blur-3xl mix-blend-multiply" 
@@ -116,7 +122,7 @@ const HeroIllustration = () => (
 
     {/* Floating Abstract UI Elements */}
     <motion.div
-      initial={{ rotateX: 20, rotateY: -20, y: 0 }}
+      initial={{ rotateX: 20, rotateY: -20, y: 0, opacity: 1 }}
       animate={{ 
         rotateX: [20, 15, 20], 
         rotateY: [-20, -10, -20],
@@ -141,7 +147,7 @@ const HeroIllustration = () => (
 
     {/* Background Card */}
     <motion.div
-      initial={{ rotateX: 20, rotateY: -20, x: 40, y: 40, z: -50 }}
+      initial={{ rotateX: 20, rotateY: -20, x: 40, y: 40, z: -50, opacity: 1 }}
       animate={{ 
         y: [40, 60, 40],
         rotateY: [-20, -25, -20]
@@ -152,6 +158,7 @@ const HeroIllustration = () => (
     
     {/* Floating Sphere - Warm */}
     <motion.div
+      initial={{ y: -10, opacity: 1 }}
       animate={{ y: [-10, 10, -10] }}
       transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       className="absolute -left-4 top-1/3 w-16 h-16 bg-gradient-to-br from-orange-50 to-white rounded-full shadow-lg border border-white/50 backdrop-blur-sm z-20"
@@ -160,15 +167,33 @@ const HeroIllustration = () => (
 );
 
 const App: React.FC = () => {
+  // View State
   const [activeCategory, setActiveCategory] = useState<string>('全部');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchResult, setSearchResult] = useState<{ids: string[], reason: string} | null>(null);
-  
-  // Navigation State
-  const [currentView, setCurrentView] = useState<'list' | 'detail'>('list');
+  const [currentView, setCurrentView] = useState<'list' | 'detail' | 'auth' | 'profile'>('list');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   
+  // User State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showLoginSuccess, setShowLoginSuccess] = useState(false);
+  
+  const [userProfile, setUserProfile] = useState<UserProfileType>({
+    name: 'Design Enthusiast',
+    email: 'user@example.com',
+    bio: '热爱设计与极简主义的开发者。',
+    avatar: 'D',
+    credits: 1250
+  });
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [downloadRecords, setDownloadRecords] = useState<DownloadRecord[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([
+    { id: 't1', type: 'recharge', amount: 500, date: '2024-05-20', description: '钱包充值' },
+    { id: 't2', type: 'expense', amount: 49, date: '2024-05-21', description: '购买模版: Lumina 筑梦集 1' }
+  ]);
+
   // Filters
   const [textSearch, setTextSearch] = useState('');
   const [sortOption, setSortOption] = useState<SortOption>('featured');
@@ -185,17 +210,14 @@ const App: React.FC = () => {
   const displayedTemplates = useMemo(() => {
     let filtered = [...MOCK_TEMPLATES];
 
-    // 1. AI Recommendations
     if (searchResult) {
       filtered = filtered.filter(t => searchResult.ids.includes(t.id));
     }
 
-    // 2. Category Filter
     if (activeCategory !== '全部') {
       filtered = filtered.filter(t => t.category === activeCategory);
     }
 
-    // 3. Text Search
     if (textSearch.trim()) {
       const q = textSearch.toLowerCase();
       filtered = filtered.filter(t => 
@@ -205,7 +227,6 @@ const App: React.FC = () => {
       );
     }
 
-    // 4. Sorting
     switch (sortOption) {
       case 'price-asc':
         filtered.sort((a, b) => a.price - b.price);
@@ -224,14 +245,12 @@ const App: React.FC = () => {
     return filtered;
   }, [activeCategory, searchResult, textSearch, sortOption]);
 
+  // Handlers
   const handleSmartSearch = async (query: string) => {
     setIsSearching(true);
     try {
       const result = await getSmartRecommendations(query, MOCK_TEMPLATES);
-      setSearchResult({
-        ids: result.recommendedIds,
-        reason: result.reasoning
-      });
+      setSearchResult({ ids: result.recommendedIds, reason: result.reasoning });
       setActiveCategory('全部');
       setTextSearch('');
       setSortOption('featured');
@@ -260,22 +279,62 @@ const App: React.FC = () => {
     setTimeout(() => setSelectedTemplate(null), 500);
   };
 
+  // Auth Logic
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    // Trigger Celebration
+    setShowConfetti(true);
+    setShowLoginSuccess(true);
+    
+    setTimeout(() => {
+       setCurrentView('list');
+       setTimeout(() => {
+         setShowConfetti(false);
+         setShowLoginSuccess(false);
+       }, 3000);
+    }, 1000);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentView('list');
+    setShowConfetti(false);
+  };
+
   return (
-    <div className="min-h-screen bg-[#fcfaf8] text-primary font-sans selection:bg-orange-200 selection:text-orange-900">
+    <div className="min-h-screen bg-[#fcfaf8] text-primary font-sans selection:bg-orange-200 selection:text-orange-900 relative overflow-x-hidden">
       
+      {/* Confetti Overlay */}
+      {showConfetti && <Confetti />}
+
+      {/* Login Success Toast */}
+      <AnimatePresence>
+        {showLoginSuccess && (
+          <motion.div 
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] bg-white border border-green-100 shadow-2xl px-8 py-4 rounded-full flex items-center gap-3"
+          >
+            <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div className="font-bold text-gray-900">欢迎回来，{userProfile.name}！</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* --- HEADER --- */}
       <nav className="sticky top-0 z-50 bg-[#fcfaf8]/80 backdrop-blur-xl border-b border-gray-200/50 transition-all">
         <div className="max-w-[1800px] mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2 cursor-pointer group" onClick={() => setCurrentView('list')}>
-            {/* Updated Logo Colors: Warm Orange/Amber */}
             <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
               <span className="text-orange-900 font-serif font-bold italic text-xl">Z</span>
             </div>
             <span className="text-xl font-serif font-semibold tracking-tight">Zelpis TP</span>
           </div>
           
-          <div className="flex items-center gap-3">
-             {/* AI Search Trigger */}
+          <div className="flex items-center gap-4">
              <button 
               onClick={() => setIsSearchOpen(true)}
               className="group flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-900 rounded-full transition-all duration-300"
@@ -283,28 +342,79 @@ const App: React.FC = () => {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <span className="text-sm font-medium hidden sm:inline">询问 Zelpis AI</span>
             </button>
+
+            {isAuthenticated ? (
+              <div 
+                onClick={() => setCurrentView('profile')}
+                className="w-9 h-9 bg-orange-900 text-orange-50 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer hover:bg-orange-800 transition-colors ring-2 ring-offset-2 ring-transparent hover:ring-orange-200"
+              >
+                {userProfile.avatar}
+              </div>
+            ) : (
+              <button 
+                onClick={() => setCurrentView('auth')}
+                className="px-5 py-2 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors"
+              >
+                登录
+              </button>
+            )}
           </div>
         </div>
       </nav>
 
       <AnimatePresence mode="wait">
-        {currentView === 'list' ? (
+        
+        {/* --- AUTH VIEW --- */}
+        {currentView === 'auth' && (
+           <motion.div
+             key="auth"
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             className="absolute inset-0 z-40 bg-[#fcfaf8]"
+           >
+             <AuthPage onLogin={handleLogin} />
+           </motion.div>
+        )}
+
+        {/* --- PROFILE VIEW --- */}
+        {currentView === 'profile' && (
+          <motion.div
+            key="profile"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="absolute inset-0 z-40 bg-[#fcfaf8]"
+          >
+            <UserProfile 
+              user={userProfile}
+              transactions={transactions}
+              downloadRecords={downloadRecords}
+              favoriteTemplates={MOCK_TEMPLATES.filter(t => favorites.includes(t.id))}
+              onLogout={handleLogout}
+              onUpdateProfile={(updated) => setUserProfile({ ...userProfile, ...updated })}
+              onNavigateHome={() => setCurrentView('list')}
+              onTemplateClick={handleTemplateClick}
+            />
+          </motion.div>
+        )}
+
+        {/* --- LIST VIEW --- */}
+        {currentView === 'list' && (
           <motion.div
             key="list-view"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, x: -50 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
+            className="min-h-screen"
           >
-             {/* --- HERO SPLIT LAYOUT --- */}
             <header className="px-6 pt-12 pb-4 md:pt-20 md:pb-8 max-w-[1800px] mx-auto">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                 
-                {/* Left: Typography */}
                 <div className="lg:col-span-7 xl:col-span-8 space-y-6 z-10">
                    {searchResult ? (
                      <div className="space-y-4">
-                        {/* Updated Badge Colors: Warm Terracotta */}
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-xs font-bold tracking-wider text-orange-700 uppercase">
                           AI 甄选
                         </div>
@@ -331,18 +441,15 @@ const App: React.FC = () => {
                    )}
                 </div>
 
-                {/* Right: Illustration (Replaces the old Command Center) */}
                 <div className="lg:col-span-5 xl:col-span-4 hidden lg:block">
                    <HeroIllustration />
                 </div>
               </div>
             </header>
 
-            {/* --- TOOLBAR (Categories + Search + Sort) --- */}
+            {/* Toolbar */}
             <div className="sticky top-[73px] z-40 bg-[#fcfaf8]/95 backdrop-blur-md border-b border-gray-200/50 py-3 px-6 mb-8 transition-all shadow-sm">
                <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-                 
-                 {/* Categories (Left) */}
                  <div className="w-full md:w-auto overflow-x-auto no-scrollbar flex items-center space-x-2 pb-2 md:pb-0">
                     {['全部', ...CATEGORIES].map(cat => (
                       <button
@@ -359,9 +466,7 @@ const App: React.FC = () => {
                     ))}
                  </div>
 
-                 {/* Tools (Right) */}
                  <div className="w-full md:w-auto flex items-center gap-3">
-                    {/* Text Search */}
                     <div className="relative flex-1 md:w-64 group">
                        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                          <svg className="w-4 h-4 text-gray-400 group-focus-within:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35"/></svg>
@@ -375,7 +480,6 @@ const App: React.FC = () => {
                        />
                     </div>
 
-                    {/* Sort Dropdown */}
                     <div className="relative">
                       <button 
                         onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
@@ -413,7 +517,6 @@ const App: React.FC = () => {
                </div>
             </div>
 
-            {/* --- MAIN GRID --- */}
             <main className="px-6 pb-24 max-w-[1800px] mx-auto min-h-[600px]">
               {displayedTemplates.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -451,9 +554,12 @@ const App: React.FC = () => {
               )}
             </main>
           </motion.div>
-        ) : (
-          /* --- DETAIL VIEW --- */
+        )}
+
+        {/* --- DETAIL VIEW --- */}
+        {currentView === 'detail' && (
           <ProductModal 
+            key="detail-view"
             template={selectedTemplate} 
             allTemplates={MOCK_TEMPLATES}
             onClose={handleBackToStore}
@@ -462,7 +568,6 @@ const App: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* --- OVERLAYS --- */}
       <SearchOverlay 
         isOpen={isSearchOpen} 
         onClose={() => setIsSearchOpen(false)}
@@ -471,31 +576,33 @@ const App: React.FC = () => {
       />
       
       {/* --- FOOTER --- */}
-      <footer className="bg-white border-t border-gray-100 py-24 px-6 mt-auto">
-        <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
-           <div className="space-y-4">
-             <h2 className="text-3xl font-serif font-bold tracking-tight">Zelpis TP</h2>
-             <p className="text-gray-400 text-sm max-w-xs">
-               为创作者赋能，打破想象与现实的边界。
-             </p>
-           </div>
-           <div className="flex flex-col sm:flex-row gap-8 sm:gap-16 text-sm">
-             <div className="flex flex-col gap-4">
-                <span className="font-bold text-black">平台</span>
-                <a href="#" className="text-gray-500 hover:text-black transition-colors">浏览</a>
-                <a href="#" className="text-gray-500 hover:text-black transition-colors">出售</a>
-             </div>
-             <div className="flex flex-col gap-4">
-                <span className="font-bold text-black">公司</span>
-                <a href="#" className="text-gray-500 hover:text-black transition-colors">联系我们</a>
-             </div>
-           </div>
-        </div>
-        <div className="max-w-[1800px] mx-auto mt-16 pt-8 border-t border-gray-50 flex justify-between items-center text-xs text-gray-400">
-           <p>© 2024 Zelpis TP Inc.</p>
-           <p>Designed with Gemini.</p>
-        </div>
-      </footer>
+      {currentView !== 'auth' && currentView !== 'profile' && (
+        <footer className="bg-white border-t border-gray-100 py-24 px-6 mt-auto">
+          <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
+            <div className="space-y-4">
+              <h2 className="text-3xl font-serif font-bold tracking-tight">Zelpis TP</h2>
+              <p className="text-gray-400 text-sm max-w-xs">
+                为创作者赋能，打破想象与现实的边界。
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-8 sm:gap-16 text-sm">
+              <div className="flex flex-col gap-4">
+                  <span className="font-bold text-black">平台</span>
+                  <a href="#" className="text-gray-500 hover:text-black transition-colors">浏览</a>
+                  <a href="#" className="text-gray-500 hover:text-black transition-colors">出售</a>
+              </div>
+              <div className="flex flex-col gap-4">
+                  <span className="font-bold text-black">公司</span>
+                  <a href="#" className="text-gray-500 hover:text-black transition-colors">联系我们</a>
+              </div>
+            </div>
+          </div>
+          <div className="max-w-[1800px] mx-auto mt-16 pt-8 border-t border-gray-50 flex justify-between items-center text-xs text-gray-400">
+            <p>© 2024 Zelpis TP Inc.</p>
+            <p>Designed with Gemini.</p>
+          </div>
+        </footer>
+      )}
     </div>
   );
 };

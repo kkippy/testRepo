@@ -35,3 +35,28 @@ export interface AIRecommendationResponse {
   recommendedIds: string[];
   reasoning: string;
 }
+
+// --- User & Dashboard Types ---
+
+export interface UserProfile {
+  name: string;
+  email: string;
+  bio: string;
+  avatar: string; // Initials or URL
+  credits: number;
+}
+
+export interface Transaction {
+  id: string;
+  type: 'recharge' | 'expense';
+  amount: number;
+  date: string;
+  description: string;
+}
+
+export interface DownloadRecord {
+  id: string;
+  templateId: string;
+  templateTitle: string;
+  date: string;
+}

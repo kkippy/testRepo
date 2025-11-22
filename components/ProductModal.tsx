@@ -15,6 +15,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplat
   const [isDownloading, setIsDownloading] = useState(false);
   const [showDownloadPopup, setShowDownloadPopup] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showFavoritePopup, setShowFavoritePopup] = useState(false);
+  const [favoriteAction, setFavoriteAction] = useState<'add' | 'remove'>('add');
   
   // Review Logic State
   const [localReviews, setLocalReviews] = useState<Review[]>([]);
@@ -58,6 +60,15 @@ export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplat
     }, 1500);
   };
 
+  const toggleFavorite = () => {
+    const newStatus = !isFavorite;
+    setIsFavorite(newStatus);
+    setFavoriteAction(newStatus ? 'add' : 'remove');
+    setShowFavoritePopup(true);
+    // Reset timer for existing toast or create new one
+    setTimeout(() => setShowFavoritePopup(false), 2000);
+  };
+
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
     if (ratingInput === 0) return;
@@ -90,22 +101,44 @@ export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplat
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className="min-h-screen bg-white z-40 relative"
     >
-      {/* Download Popup Toast */}
-      <AnimatePresence>
-        {showDownloadPopup && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20, x: '-50%' }}
-            animate={{ opacity: 1, y: 0, x: '-50%' }}
-            exit={{ opacity: 0, y: 20, x: '-50%' }}
-            className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 bg-black text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3"
-          >
-            <div className="bg-green-500 rounded-full p-1">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            </div>
-            <span className="font-medium text-sm">文件下载成功！</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Toasts Container */}
+      <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 items-center pointer-events-none w-full px-4">
+        <AnimatePresence>
+          {/* Download Toast */}
+          {showDownloadPopup && (
+            <motion.div 
+              layout
+              initial={{ opacity: 0, y: 20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.9 }}
+              className="bg-black text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3 pointer-events-auto"
+            >
+              <div className="bg-green-500 rounded-full p-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <span className="font-medium text-sm">文件下载成功！</span>
+            </motion.div>
+          )}
+
+          {/* Favorite Toast */}
+          {showFavoritePopup && (
+            <motion.div 
+              layout
+              initial={{ opacity: 0, y: 20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.9 }}
+              className="bg-white border border-gray-200 text-gray-900 px-8 py-4 rounded-full shadow-xl flex items-center gap-4 pointer-events-auto"
+            >
+              <div className={`rounded-full p-1.5 ${favoriteAction === 'add' ? 'text-white bg-red-500' : 'text-gray-400 bg-gray-100'}`}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill={favoriteAction === 'add' ? "currentColor" : "none"} stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+              </div>
+              <span className="font-bold text-base">
+                {favoriteAction === 'add' ? '已成功收藏该模版' : '已从收藏夹移除'}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Detail Page Header */}
       <div className="relative h-[60vh] w-full overflow-hidden bg-gray-100">
@@ -403,8 +436,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplat
                        <span className="text-4xl font-serif font-medium">¥{template.price}</span>
                     </div>
                     <button 
-                      onClick={() => setIsFavorite(!isFavorite)}
-                      className={`p-3 rounded-full transition-all ${isFavorite ? 'bg-red-50 text-red-500' : 'bg-white text-gray-400 hover:text-black'}`}
+                      onClick={toggleFavorite}
+                      className={`p-3 rounded-full transition-all hover:bg-gray-100 ${isFavorite ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-white text-gray-400 hover:text-black'}`}
                     >
                       <svg width="24" height="24" viewBox="0 0 24 24" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                     </button>
