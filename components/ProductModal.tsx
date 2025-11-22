@@ -413,7 +413,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplat
                   <button 
                     onClick={handleDownload}
                     disabled={isDownloading}
-                    className="w-full bg-black text-white py-5 rounded-xl font-medium text-lg hover:bg-gray-900 transition-all hover:shadow-xl hover:-translate-y-1 mb-4 flex justify-center items-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="w-full bg-black text-white h-[72px] flex items-center justify-center rounded-xl font-medium text-lg hover:bg-gray-900 transition-all hover:shadow-xl hover:-translate-y-1 mb-4 gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     {isDownloading ? (
                       <>
@@ -435,7 +435,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplat
                     href={template.previewUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex justify-center items-center w-full py-5 bg-white border border-gray-200 rounded-xl font-medium text-lg text-gray-700 hover:border-black hover:text-black transition-all"
+                    className="w-full h-[72px] flex items-center justify-center bg-white border border-gray-200 rounded-xl font-medium text-lg text-gray-700 hover:border-black hover:text-black transition-all"
                   >
                     在线预览
                   </a>
