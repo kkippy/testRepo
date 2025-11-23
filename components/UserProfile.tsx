@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { UserProfile as UserProfileType, Transaction, DownloadRecord, Template } from '../types';
 import { TemplateCard } from './TemplateCard';
 
@@ -88,9 +88,29 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const [oldPass, setOldPass] = useState('');
   const [newPass, setNewPass] = useState('');
 
+  // Recharge Toast State
+  const [showRechargeSuccess, setShowRechargeSuccess] = useState(false);
+  const [lastRecharge, setLastRecharge] = useState<{ amount: number; credits: number } | null>(null);
+
   const handleSaveProfile = () => {
     onUpdateProfile({ name: editName, bio: editBio });
     setIsEditing(false);
+  };
+
+  const handleRecharge = (tier: any) => {
+    const totalCredits = tier.credits + tier.bonus;
+    
+    // Update local UI state for toast
+    setLastRecharge({ amount: tier.price, credits: totalCredits });
+    setShowRechargeSuccess(true);
+    
+    // Update actual user balance via parent callback
+    onUpdateProfile({ credits: user.credits + totalCredits });
+
+    // Hide toast after 3 seconds
+    setTimeout(() => {
+      setShowRechargeSuccess(false);
+    }, 3000);
   };
 
   const TabButton = ({ id, label, icon }: { id: Tab; label: string; icon: React.ReactNode }) => (
@@ -136,7 +156,33 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-[#fcfaf8] pt-24 pb-12 px-6">
+    <div className="min-h-screen bg-[#fcfaf8] pt-24 pb-12 px-6 relative">
+      
+      {/* Recharge Success Toast */}
+      <AnimatePresence>
+        {showRechargeSuccess && lastRecharge && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
+            animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
+            exit={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
+            className="fixed top-1/2 left-1/2 z-[100] bg-white border border-green-100 shadow-2xl p-8 rounded-3xl flex flex-col items-center gap-4 text-center min-w-[300px]"
+          >
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-2">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div>
+              <h4 className="text-xl font-bold text-gray-900">充值成功</h4>
+              <p className="text-gray-500 mt-2">
+                已支付 <span className="font-bold text-black">¥{lastRecharge.amount}</span>
+              </p>
+              <div className="mt-4 bg-green-50 text-green-700 px-4 py-2 rounded-lg font-bold">
+                获得 {lastRecharge.credits} 积分
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-[1400px] mx-auto">
         
         {/* Breadcrumb / Header */}
@@ -380,7 +426,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                               )}
                             </div>
 
-                            <button className={`w-full py-4 rounded-xl font-bold text-sm transition-all uppercase tracking-wide relative z-20 ${
+                            <button 
+                              onClick={() => handleRecharge(tier)}
+                              className={`w-full py-4 rounded-xl font-bold text-sm transition-all uppercase tracking-wide relative z-20 ${
                               tier.type === 'hero'
                                 ? 'bg-white text-black hover:bg-gray-100 shadow-xl'
                                 : 'bg-gray-900 text-white hover:bg-black shadow-lg'

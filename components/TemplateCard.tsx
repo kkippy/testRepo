@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useMotionTemplate, useMotionValue, useSpring, Variants } from 'framer-motion';
 import { Template } from '../types';
 
@@ -10,6 +10,11 @@ interface TemplateCardProps {
 export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
+
+  // Reset loading state if the image URL changes (e.g. during filtering/sorting reorders)
+  useEffect(() => {
+    setImgLoaded(false);
+  }, [template.imageUrl]);
 
   // Mouse move effect for "3D" tilt or parallax on hover
   const x = useMotionValue(0);
@@ -82,10 +87,14 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick })
         className="relative overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-500 hover:shadow-2xl aspect-[16/10] ring-1 ring-black/5 hover:ring-black/10"
       >
         {/* Image Layer */}
-        <div className="absolute inset-0 overflow-hidden bg-gray-100">
+        <div className="absolute inset-0 overflow-hidden bg-stone-100">
           {/* Skeleton Loader */}
           {!imgLoaded && (
-            <div className="absolute inset-0 bg-gray-200 animate-pulse z-10" />
+            <div className="absolute inset-0 bg-stone-200 animate-pulse z-10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-stone-300 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
           )}
 
           <motion.img
