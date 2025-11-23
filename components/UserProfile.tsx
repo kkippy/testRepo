@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { UserProfile as UserProfileType, Transaction, DownloadRecord, Template } from '../types';
@@ -15,6 +16,58 @@ interface UserProfileProps {
 }
 
 type Tab = 'profile' | 'favorites' | 'downloads' | 'wallet' | 'security';
+
+interface FoilCardProps {
+  tier: any;
+  children: React.ReactNode;
+}
+
+// --- "Magic Card" Effect Implementation ---
+const FoilCard: React.FC<FoilCardProps> = ({ tier, children }) => {
+  const isHero = tier.type === 'hero';
+
+  // Define the rotating gradient colors based on tier
+  // Basic: Subtle Silver/Gray
+  // Pro: Brand Indigo/Cyan
+  // Hero: Full Holographic Spectrum
+  const gradientColors = (() => {
+    switch (tier.type) {
+      case 'hero':
+        return 'conic-gradient(from 0deg, #ff4545, #00ff99, #006aff, #ff0095, #ff4545)';
+      case 'pro':
+        return 'conic-gradient(from 0deg, transparent 0deg, transparent 260deg, #6366f1 360deg)'; // Indigo tail
+      default:
+        return 'conic-gradient(from 0deg, transparent 0deg, transparent 260deg, #9ca3af 360deg)'; // Gray tail
+    }
+  })();
+
+  // Content background styling
+  const contentBgClass = isHero 
+    ? 'bg-slate-900/90 text-white' 
+    : 'bg-white/90 text-gray-900';
+
+  return (
+    <div className="group relative rounded-3xl w-full h-full overflow-hidden p-[2px] transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+      {/* 1. The Spinning Gradient Layer (Behind content) */}
+      <div 
+        className="absolute inset-[-100%] animate-[spin_4s_linear_infinite]" 
+        style={{ background: gradientColors }}
+      />
+      
+      {/* 2. Inner Content Mask (Creating the border effect) */}
+      <div className={`relative h-full w-full rounded-[22px] backdrop-blur-xl p-6 flex flex-col ${contentBgClass}`}>
+        
+        {/* Subtle noise texture for realism */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay" 
+             style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} 
+        />
+
+        {children}
+      </div>
+    </div>
+  );
+};
+
 
 export const UserProfile: React.FC<UserProfileProps> = ({ 
   user, 
@@ -62,7 +115,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       credits: 1000,
       bonus: 0,
       type: 'basic',
-      title: 'I 档 · 基础包'
+      title: '基础包'
     },
     {
       id: 2,
@@ -70,7 +123,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       credits: 2000,
       bonus: 100,
       type: 'pro',
-      title: 'II 档 · 进阶包'
+      title: '进阶包'
     },
     {
       id: 3,
@@ -78,7 +131,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       credits: 5000,
       bonus: 500,
       type: 'hero',
-      title: 'III 档 · 旗舰包'
+      title: '旗舰包'
     }
   ];
 
@@ -286,117 +339,55 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                         <p className="text-gray-400 text-sm">当前余额: <span className="text-black font-bold text-lg">{user.credits}</span> 积分</p>
                     </div>
 
-                    {/* Recharge Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Magic Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                       {rechargeTiers.map((tier) => (
-                        <motion.div
-                          key={tier.id}
-                          whileHover={{ y: -8 }}
-                          animate={tier.type === 'hero' ? {
-                            boxShadow: [
-                              "0px 0px 0px rgba(99, 102, 241, 0)",
-                              "0px 0px 25px rgba(99, 102, 241, 0.25)",
-                              "0px 0px 0px rgba(99, 102, 241, 0)"
-                            ]
-                          } : {}}
-                          transition={tier.type === 'hero' ? {
-                            duration: 3,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                          } : {}}
-                          className={`relative rounded-2xl p-6 border flex flex-col cursor-pointer transition-all overflow-hidden ${
-                            tier.type === 'hero' 
-                              ? 'bg-[#1c1917] border-[#292524] text-white' 
-                              : tier.type === 'pro'
-                                ? 'bg-white border-indigo-100 text-gray-900 shadow-md shadow-indigo-100/50'
-                                : 'bg-white border-gray-200 text-gray-900 hover:border-gray-300'
-                          }`}
-                        >
-                          {/* --- Background Patterns --- */}
-                          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-                             {tier.type === 'basic' && (
-                               <div className="absolute -top-10 -right-10 w-40 h-40 opacity-10">
-                                 <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" className="text-gray-900 w-full h-full">
-                                    <circle cx="50" cy="50" r="40" strokeWidth="0.5" />
-                                    <circle cx="50" cy="50" r="30" strokeWidth="0.5" />
-                                    <circle cx="50" cy="50" r="20" strokeWidth="0.5" />
-                                 </svg>
-                               </div>
-                             )}
-
-                             {tier.type === 'pro' && (
-                               <>
-                                 <motion.div 
-                                   animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-                                   transition={{ duration: 6, repeat: Infinity }}
-                                   className="absolute -bottom-10 -right-10 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl" 
-                                 />
-                                 <motion.div 
-                                   animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
-                                   transition={{ duration: 8, repeat: Infinity, delay: 1 }}
-                                   className="absolute top-10 right-0 w-32 h-32 bg-rose-400/10 rounded-full blur-2xl" 
-                                 />
-                               </>
-                             )}
-
-                             {tier.type === 'hero' && (
-                               <>
-                                  <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }}></div>
-                                  <motion.div 
-                                     animate={{ rotate: 360, scale: [1, 1.3, 1] }}
-                                     transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                                     className="absolute -top-20 -left-20 w-[150%] h-[150%] bg-gradient-to-br from-orange-500/20 via-transparent to-purple-600/20 blur-3xl opacity-50"
-                                  />
-                               </>
-                             )}
-                          </div>
-
-                          <div className="relative z-10 flex flex-col h-full">
+                        <FoilCard key={tier.id} tier={tier}>
+                            {/* Hero Badge */}
                             {tier.type === 'hero' && (
-                              <div className="absolute -top-3 -right-3 bg-gradient-to-r from-orange-400 to-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg uppercase tracking-wider transform rotate-12 z-10">
+                              <div className="absolute top-4 right-4 bg-gradient-to-r from-orange-500 to-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg uppercase tracking-wider z-20">
                                 最划算
                               </div>
                             )}
                             
-                            <div className="mb-6">
-                              <h4 className={`text-sm font-bold uppercase tracking-wider mb-3 ${tier.type === 'hero' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            <div className="mb-8 z-10">
+                              <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 ${tier.type === 'hero' ? 'text-gray-400' : 'text-gray-400'}`}>
                                 {tier.title}
                               </h4>
                               <div className="flex items-baseline gap-1">
-                                <span className="text-4xl font-serif font-bold tracking-tight">¥{tier.price}</span>
+                                <span className={`text-5xl font-serif font-bold tracking-tight`}>
+                                  ¥{tier.price}
+                                </span>
                               </div>
                             </div>
 
-                            <div className="space-y-3 mb-8 flex-1">
-                              <div className="flex items-center gap-2 text-sm">
-                                <div className={`w-5 h-5 rounded-full flex items-center justify-center ${tier.type === 'hero' ? 'bg-orange-500/20 text-orange-300' : 'bg-indigo-50 text-indigo-600'}`}>
+                            <div className="space-y-3 mb-8 flex-1 z-10 relative">
+                              <div className="flex items-center gap-3 text-sm">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${tier.type === 'hero' ? 'bg-white/10 text-white' : 'bg-gray-100 text-gray-600'}`}>
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                 </div>
-                                <span className="font-medium">{tier.credits} 基础积分</span>
+                                <span className="font-medium text-base">{tier.credits} 积分</span>
                               </div>
                               {tier.bonus > 0 && (
-                                <div className="flex items-center gap-2 text-sm">
-                                  <div className={`w-5 h-5 rounded-full flex items-center justify-center ${tier.type === 'hero' ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-50 text-purple-600'}`}>
+                                <div className="flex items-center gap-3 text-sm">
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${tier.type === 'hero' ? 'bg-orange-500/20 text-orange-300' : 'bg-indigo-50 text-indigo-600'}`}>
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                                   </div>
                                   <span className={`${tier.type === 'hero' ? 'text-orange-200' : 'text-indigo-600'} font-bold`}>
-                                    额外赠送 {tier.bonus} 积分
+                                    + {tier.bonus} 赠送
                                   </span>
                                 </div>
                               )}
                             </div>
 
-                            <button className={`w-full py-4 rounded-xl font-bold text-sm transition-all uppercase tracking-wide ${
+                            <button className={`w-full py-4 rounded-xl font-bold text-sm transition-all uppercase tracking-wide relative z-20 ${
                               tier.type === 'hero'
-                                ? 'bg-white text-black hover:bg-gray-100 shadow-[0_0_20px_rgba(255,255,255,0.15)]'
-                                : tier.type === 'pro'
-                                  ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/20'
-                                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-black'
+                                ? 'bg-white text-black hover:bg-gray-100 shadow-xl'
+                                : 'bg-gray-900 text-white hover:bg-black shadow-lg'
                             }`}>
                               立即充值
                             </button>
-                          </div>
-                        </motion.div>
+                        </FoilCard>
                       ))}
                     </div>
 

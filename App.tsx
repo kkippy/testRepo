@@ -311,10 +311,10 @@ const App: React.FC = () => {
       <AnimatePresence>
         {showLoginSuccess && (
           <motion.div 
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] bg-white border border-green-100 shadow-2xl px-8 py-4 rounded-full flex items-center gap-3"
+            initial={{ opacity: 0, y: -50, x: "-50%" }}
+            animate={{ opacity: 1, y: 0, x: "-50%" }}
+            exit={{ opacity: 0, y: -50, x: "-50%" }}
+            className="fixed top-24 left-1/2 z-[100] bg-white border border-green-100 shadow-2xl px-8 py-4 rounded-full flex items-center gap-3"
           >
             <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
