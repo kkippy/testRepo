@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserProfile as UserProfileType, Transaction, DownloadRecord, Template } from '../types';
 import { TemplateCard } from './TemplateCard';
@@ -22,52 +22,106 @@ interface FoilCardProps {
   children: React.ReactNode;
 }
 
-// --- "Magic Card" Effect Implementation ---
+// --- 3D Tilt Card Implementation ---
 const FoilCard: React.FC<FoilCardProps> = ({ tier, children }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [rotation, setRotation] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    
+    // Calculate mouse position relative to card center
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    // Normalize to -1 to 1 range
+    const rotateX = ((y - centerY) / centerY) * -15; // Invert Y for natural tilt
+    const rotateY = ((x - centerX) / centerX) * 15;
+
+    setRotation({ x: rotateX, y: rotateY });
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setRotation({ x: 0, y: 0 });
+  };
+  
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
   const isHero = tier.type === 'hero';
 
-  // Define the rotating gradient colors based on tier
-  // Basic: Subtle Silver/Gray
-  // Pro: Brand Indigo/Cyan
-  // Hero: Full Holographic Spectrum
-  const gradientColors = (() => {
-    switch (tier.type) {
-      case 'hero':
-        return 'conic-gradient(from 0deg, #ff4545, #00ff99, #006aff, #ff0095, #ff4545)';
-      case 'pro':
-        return 'conic-gradient(from 0deg, transparent 0deg, transparent 260deg, #6366f1 360deg)'; // Indigo tail
-      default:
-        return 'conic-gradient(from 0deg, transparent 0deg, transparent 260deg, #9ca3af 360deg)'; // Gray tail
-    }
-  })();
+  // Dynamic Styles based on Tier
+  const bgClass = isHero 
+    ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white' 
+    : tier.type === 'pro'
+      ? 'bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-900'
+      : 'bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900';
 
-  // Content background styling
-  const contentBgClass = isHero 
-    ? 'bg-slate-900/90 text-white' 
-    : 'bg-white/90 text-gray-900';
+  const borderClass = isHero 
+    ? 'border-gray-700/50' 
+    : tier.type === 'pro' 
+      ? 'border-indigo-100' 
+      : 'border-white';
 
   return (
-    <div className="group relative rounded-3xl w-full h-full overflow-hidden p-[2px] transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
-      {/* 1. The Spinning Gradient Layer (Behind content) */}
-      <div 
-        className="absolute inset-[-100%] animate-[spin_4s_linear_infinite]" 
-        style={{ background: gradientColors }}
-      />
-      
-      {/* 2. Inner Content Mask (Creating the border effect) */}
-      <div className={`relative h-full w-full rounded-[22px] backdrop-blur-xl p-6 flex flex-col ${contentBgClass}`}>
-        
-        {/* Subtle noise texture for realism */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay" 
-             style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")' }} 
+    <div style={{ perspective: '1200px' }} className="w-full h-full">
+      <motion.div
+        ref={cardRef}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        animate={{
+          rotateX: rotation.x,
+          rotateY: rotation.y,
+          scale: isHovered ? 1.02 : 1,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 400,
+          damping: 30,
+          mass: 0.8
+        }}
+        style={{ transformStyle: 'preserve-3d' }}
+        className={`relative w-full h-full rounded-3xl border ${borderClass} shadow-xl overflow-hidden ${bgClass} transition-shadow duration-300 ${isHovered ? 'shadow-2xl' : 'shadow-xl'}`}
+      >
+        {/* Shine Effect Layer */}
+        <div 
+           className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-20"
+           style={{
+             background: `linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,${isHero ? '0.15' : '0.4'}) 50%, rgba(255,255,255,0) 100%)`,
+             transform: `translateX(${rotation.y}%) translateY(${rotation.x}%) translateZ(1px)`,
+             mixBlendMode: 'overlay'
+           }}
         />
 
-        {children}
-      </div>
+        {/* Content Container - Pops out in 3D */}
+        <div 
+          style={{ transform: 'translateZ(30px)' }}
+          className="relative z-10 p-8 h-full flex flex-col"
+        >
+          {children}
+        </div>
+        
+        {/* Background Depth Elements */}
+        <div 
+            style={{ transform: 'translateZ(10px)' }}
+            className={`absolute -top-10 -right-10 w-40 h-40 rounded-full blur-[60px] opacity-40 pointer-events-none ${isHero ? 'bg-orange-500' : tier.type === 'pro' ? 'bg-indigo-300' : 'bg-gray-300'}`}
+        />
+        <div 
+            style={{ transform: 'translateZ(5px)' }}
+            className={`absolute -bottom-10 -left-10 w-40 h-40 rounded-full blur-[60px] opacity-40 pointer-events-none ${isHero ? 'bg-rose-600' : tier.type === 'pro' ? 'bg-purple-300' : 'bg-gray-200'}`}
+        />
+      </motion.div>
     </div>
   );
 };
-
 
 export const UserProfile: React.FC<UserProfileProps> = ({ 
   user, 
