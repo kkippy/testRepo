@@ -489,7 +489,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                       <span>包含技术支持</span>
                     </div>
                   </div>
-               )}
+                </div>    
+
             </div>
             
           </div>
