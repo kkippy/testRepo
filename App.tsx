@@ -18,7 +18,6 @@ const generateMockTemplates = (): Template[] => {
     const category = CATEGORIES[i % CATEGORIES.length];
     const id = `tpl-${i}`;
     
-    // Generate Mock DSL Code
     const dslCode = `// ${id} Configuration
 import { Layout, Theme } from '@zelpis/core';
 
@@ -106,7 +105,7 @@ const MOCK_TEMPLATES = generateMockTemplates();
 // --- HERO ILLUSTRATION COMPONENT ---
 const HeroIllustration = () => (
   <div className="relative w-full h-full min-h-[400px] flex items-center justify-center perspective-1000 pointer-events-none select-none">
-    {/* Ambient Gradients - Updated to Warm Tones */}
+    {/* Ambient Gradients - Warm Tones */}
     <motion.div 
       initial={{ opacity: 0.3, scale: 1 }}
       animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
@@ -120,7 +119,7 @@ const HeroIllustration = () => (
       className="absolute bottom-1/4 left-1/4 w-72 h-72 bg-rose-100 rounded-full blur-3xl mix-blend-multiply" 
     />
 
-    {/* Floating Abstract UI Elements */}
+    {/* Floating Abstract UI Elements - With Initial States to prevent Pop-in */}
     <motion.div
       initial={{ rotateX: 20, rotateY: -20, y: 0, opacity: 1 }}
       animate={{ 
@@ -167,14 +166,16 @@ const HeroIllustration = () => (
 );
 
 const App: React.FC = () => {
-  // View State
+  // View State (Filters)
   const [activeCategory, setActiveCategory] = useState<string>('全部');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchResult, setSearchResult] = useState<{ids: string[], reason: string} | null>(null);
-  const [currentView, setCurrentView] = useState<'list' | 'detail' | 'auth' | 'profile'>('list');
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   
+  // Navigation State (Replacing Router)
+  const [currentView, setCurrentView] = useState<'list' | 'detail' | 'profile' | 'auth'>('list');
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+
   // User State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -187,7 +188,9 @@ const App: React.FC = () => {
     avatar: 'D',
     credits: 1250
   });
-  const [favorites, setFavorites] = useState<string[]>([]);
+  // Initialize with some mock favorite IDs to show functionality
+  const [favorites, setFavorites] = useState<string[]>(['tpl-0', 'tpl-2', 'tpl-5']);
+  
   const [downloadRecords, setDownloadRecords] = useState<DownloadRecord[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([
     { id: 't1', type: 'recharge', amount: 500, date: '2024-05-20', description: '钱包充值' },
@@ -276,7 +279,9 @@ const App: React.FC = () => {
 
   const handleBackToStore = () => {
     setCurrentView('list');
-    setTimeout(() => setSelectedTemplate(null), 500);
+    setTimeout(() => {
+      setSelectedTemplate(null);
+    }, 500);
   };
 
   // Auth Logic
@@ -299,6 +304,17 @@ const App: React.FC = () => {
     setIsAuthenticated(false);
     setCurrentView('list');
     setShowConfetti(false);
+  };
+
+  // Favorite Logic
+  const handleToggleFavorite = (template: Template) => {
+    setFavorites(prev => {
+      if (prev.includes(template.id)) {
+        return prev.filter(id => id !== template.id);
+      } else {
+        return [...prev, template.id];
+      }
+    });
   };
 
   return (
@@ -324,284 +340,278 @@ const App: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* --- HEADER --- */}
-      <nav className="sticky top-0 z-50 bg-[#fcfaf8]/80 backdrop-blur-xl border-b border-gray-200/50 transition-all">
-        <div className="max-w-[1800px] mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2 cursor-pointer group" onClick={() => setCurrentView('list')}>
-            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
-              <span className="text-orange-900 font-serif font-bold italic text-xl">Z</span>
-            </div>
-            <span className="text-xl font-serif font-semibold tracking-tight">Zelpis TP</span>
-          </div>
-          
-          <div className="flex items-center gap-4">
-             <button 
-              onClick={() => setIsSearchOpen(true)}
-              className="group flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-900 rounded-full transition-all duration-300"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <span className="text-sm font-medium hidden sm:inline">询问 Zelpis AI</span>
-            </button>
-
-            {isAuthenticated ? (
-              <div 
-                onClick={() => setCurrentView('profile')}
-                className="w-9 h-9 bg-orange-900 text-orange-50 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer hover:bg-orange-800 transition-colors ring-2 ring-offset-2 ring-transparent hover:ring-orange-200"
-              >
-                {userProfile.avatar}
-              </div>
-            ) : (
-              <button 
-                onClick={() => setCurrentView('auth')}
-                className="px-5 py-2 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors"
-              >
-                登录
-              </button>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      <AnimatePresence mode="wait">
-        
-        {/* --- AUTH VIEW --- */}
-        {currentView === 'auth' && (
-           <motion.div
-             key="auth"
-             initial={{ opacity: 0 }}
-             animate={{ opacity: 1 }}
-             exit={{ opacity: 0 }}
-             className="absolute inset-0 z-40 bg-[#fcfaf8]"
-           >
+      {/* --- AUTH VIEW --- */}
+      {currentView === 'auth' ? (
+         <div className="absolute inset-0 z-40 bg-[#fcfaf8]">
              <AuthPage onLogin={handleLogin} />
-           </motion.div>
-        )}
-
-        {/* --- PROFILE VIEW --- */}
-        {currentView === 'profile' && (
-          <motion.div
-            key="profile"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="absolute inset-0 z-40 bg-[#fcfaf8]"
-          >
-            <UserProfile 
-              user={userProfile}
-              transactions={transactions}
-              downloadRecords={downloadRecords}
-              favoriteTemplates={MOCK_TEMPLATES.filter(t => favorites.includes(t.id))}
-              onLogout={handleLogout}
-              onUpdateProfile={(updated) => setUserProfile({ ...userProfile, ...updated })}
-              onNavigateHome={() => setCurrentView('list')}
-              onTemplateClick={handleTemplateClick}
-            />
-          </motion.div>
-        )}
-
-        {/* --- LIST VIEW --- */}
-        {currentView === 'list' && (
-          <motion.div
-            key="list-view"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="min-h-screen"
-          >
-            <header className="px-6 pt-12 pb-4 md:pt-20 md:pb-8 max-w-[1800px] mx-auto">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                
-                <div className="lg:col-span-7 xl:col-span-8 space-y-6 z-10">
-                   {searchResult ? (
-                     <div className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-xs font-bold tracking-wider text-orange-700 uppercase">
-                          AI 甄选
-                        </div>
-                        <h1 className="text-4xl md:text-6xl font-serif leading-tight text-gray-900">
-                          "{searchResult.reason}"
-                        </h1>
-                        <button 
-                          onClick={clearSearch} 
-                          className="group flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-black transition-colors mt-4"
-                        >
-                          <span className="border-b border-gray-300 group-hover:border-black pb-0.5">返回全部模版</span>
-                        </button>
-                     </div>
-                   ) : (
-                     <div>
-                       <h1 className="text-6xl md:text-8xl font-serif font-medium leading-[0.9] tracking-tighter text-gray-900">
-                          设计 · 模版 <br/>
-                          <span className="text-gray-300 italic pl-4">灵感库</span>
-                        </h1>
-                        <p className="text-lg text-gray-500 mt-6 max-w-md leading-relaxed font-light pl-2 border-l-2 border-orange-100">
-                          为现代创作者甄选的数字资产。极致的美学标准，流畅的交互体验。
-                        </p>
-                     </div>
-                   )}
+         </div>
+      ) : (
+        <>
+          {/* --- HEADER --- */}
+          <nav className="sticky top-0 z-50 bg-[#fcfaf8]/80 backdrop-blur-xl border-b border-gray-200/50 transition-all">
+            <div className="max-w-[1800px] mx-auto px-6 py-4 flex justify-between items-center">
+              <div className="flex items-center gap-2 cursor-pointer group" onClick={handleBackToStore}>
+                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
+                  <span className="text-orange-900 font-serif font-bold italic text-xl">Z</span>
                 </div>
-
-                <div className="lg:col-span-5 xl:col-span-4 hidden lg:block">
-                   <HeroIllustration />
-                </div>
+                <span className="text-xl font-serif font-semibold tracking-tight">Zelpis TP</span>
               </div>
-            </header>
-
-            {/* Toolbar */}
-            <div className="sticky top-[73px] z-40 bg-[#fcfaf8]/95 backdrop-blur-md border-b border-gray-200/50 py-3 px-6 mb-8 transition-all shadow-sm">
-               <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-                 <div className="w-full md:w-auto overflow-x-auto no-scrollbar flex items-center space-x-2 pb-2 md:pb-0">
-                    {['全部', ...CATEGORIES].map(cat => (
-                      <button
-                        key={cat}
-                        onClick={() => { setActiveCategory(cat); }}
-                        className={`whitespace-nowrap px-5 py-1.5 rounded-full text-sm transition-all duration-300 border ${
-                          activeCategory === cat 
-                            ? 'bg-primary text-white border-primary shadow-md' 
-                            : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400 hover:text-black'
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                 </div>
-
-                 <div className="w-full md:w-auto flex items-center gap-3">
-                    <div className="relative flex-1 md:w-64 group">
-                       <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                         <svg className="w-4 h-4 text-gray-400 group-focus-within:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35"/></svg>
-                       </div>
-                       <input 
-                         type="text" 
-                         placeholder="搜索模版..." 
-                         value={textSearch}
-                         onChange={(e) => setTextSearch(e.target.value)}
-                         className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-black transition-all placeholder-gray-400"
-                       />
-                    </div>
-
-                    <div className="relative">
-                      <button 
-                        onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:border-gray-400 transition-all whitespace-nowrap"
-                      >
-                        <span className="hidden sm:inline text-gray-500">排序:</span>
-                        <span className="capitalize">{sortOptionsMap[sortOption]}</span>
-                        <svg className={`w-3 h-3 transition-transform ${isSortMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
-                      </button>
-                      
-                      <AnimatePresence>
-                         {isSortMenuOpen && (
-                           <motion.div 
-                             initial={{ opacity: 0, y: -5 }}
-                             animate={{ opacity: 1, y: 0 }}
-                             exit={{ opacity: 0, y: -5 }}
-                             className="absolute top-full right-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 overflow-hidden"
-                           >
-                             {(['featured', 'price-asc', 'price-desc', 'rating'] as SortOption[]).map((option) => (
-                               <button
-                                 key={option}
-                                 onClick={() => { setSortOption(option); setIsSortMenuOpen(false); }}
-                                 className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${sortOption === option ? 'font-medium text-black' : 'text-gray-500'}`}
-                               >
-                                 <span className="capitalize">{sortOptionsMap[option]}</span>
-                                 {sortOption === option && <span className="w-1 h-1 bg-black rounded-full"></span>}
-                               </button>
-                             ))}
-                           </motion.div>
-                         )}
-                       </AnimatePresence>
-                       {isSortMenuOpen && <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsSortMenuOpen(false)} />}
-                    </div>
-                 </div>
-               </div>
-            </div>
-
-            <main className="px-6 pb-24 max-w-[1800px] mx-auto min-h-[600px]">
-              {displayedTemplates.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 text-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                     <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900">未找到相关模版</h3>
-                  <button onClick={() => { clearSearch(); setActiveCategory('全部'); }} className="mt-6 text-black border-b border-black hover:opacity-60 transition-opacity">清空筛选条件</button>
-                </div>
-              ) : (
-                <motion.div 
-                  layout
-                  variants={{
-                    hidden: {},
-                    show: {
-                      transition: {
-                        staggerChildren: 0.06
-                      }
-                    }
-                  }}
-                  initial="hidden"
-                  animate="show"
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10"
+              
+              <div className="flex items-center gap-4">
+                 <button 
+                  onClick={() => setIsSearchOpen(true)}
+                  className="group flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-900 rounded-full transition-all duration-300"
                 >
-                  <AnimatePresence mode='popLayout'>
-                    {displayedTemplates.map((template) => (
-                      <TemplateCard 
-                        key={template.id} 
-                        template={template} 
-                        onClick={handleTemplateClick}
-                      />
-                    ))}
-                  </AnimatePresence>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <span className="text-sm font-medium hidden sm:inline">询问 Zelpis AI</span>
+                </button>
+
+                {isAuthenticated ? (
+                  <div 
+                    onClick={() => setCurrentView('profile')}
+                    className="w-9 h-9 bg-orange-900 text-orange-50 rounded-full flex items-center justify-center text-sm font-bold cursor-pointer hover:bg-orange-800 transition-colors ring-2 ring-offset-2 ring-transparent hover:ring-orange-200"
+                  >
+                    {userProfile.avatar}
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => setCurrentView('auth')}
+                    className="px-5 py-2 bg-black text-white text-sm font-medium rounded-full hover:bg-gray-800 transition-colors"
+                  >
+                    登录
+                  </button>
+                )}
+              </div>
+            </div>
+          </nav>
+
+          <AnimatePresence mode="wait">
+             {/* --- LIST VIEW --- */}
+             {currentView === 'list' && (
+                <motion.div
+                  key="list-view"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }} // Simplified exit to avoid white flash
+                  transition={{ duration: 0.4 }}
+                  className="min-h-screen"
+                >
+                  <header className="px-6 pt-12 pb-4 md:pt-20 md:pb-8 max-w-[1800px] mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                      <div className="lg:col-span-7 xl:col-span-8 space-y-6 z-10">
+                         {searchResult ? (
+                           <div className="space-y-4">
+                              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-xs font-bold tracking-wider text-orange-700 uppercase">
+                                AI 甄选
+                              </div>
+                              <h1 className="text-4xl md:text-6xl font-serif leading-tight text-gray-900">
+                                "{searchResult.reason}"
+                              </h1>
+                              <button 
+                                onClick={clearSearch} 
+                                className="group flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-black transition-colors mt-4"
+                              >
+                                <span className="border-b border-gray-300 group-hover:border-black pb-0.5">返回全部模版</span>
+                              </button>
+                           </div>
+                         ) : (
+                           <div>
+                             <h1 className="text-6xl md:text-8xl font-serif font-medium leading-[0.9] tracking-tighter text-gray-900">
+                                设计 · 模版 <br/>
+                                <span className="text-gray-300 italic pl-4">灵感库</span>
+                              </h1>
+                              <p className="text-lg text-gray-500 mt-6 max-w-md leading-relaxed font-light pl-2 border-l-2 border-orange-100">
+                                为现代创作者甄选的数字资产。极致的美学标准，流畅的交互体验。
+                              </p>
+                           </div>
+                         )}
+                      </div>
+
+                      <div className="lg:col-span-5 xl:col-span-4 hidden lg:block">
+                         <HeroIllustration />
+                      </div>
+                    </div>
+                  </header>
+
+                  {/* Toolbar */}
+                  <div className="sticky top-[73px] z-40 bg-[#fcfaf8]/95 backdrop-blur-md border-b border-gray-200/50 py-3 px-6 mb-8 transition-all shadow-sm">
+                     <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+                       <div className="w-full md:w-auto overflow-x-auto no-scrollbar flex items-center space-x-2 pb-2 md:pb-0">
+                          {['全部', ...CATEGORIES].map(cat => (
+                            <button
+                              key={cat}
+                              onClick={() => { setActiveCategory(cat); }}
+                              className={`whitespace-nowrap px-5 py-1.5 rounded-full text-sm transition-all duration-300 border ${
+                                activeCategory === cat 
+                                  ? 'bg-primary text-white border-primary shadow-md' 
+                                  : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400 hover:text-black'
+                              }`}
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                       </div>
+
+                       <div className="w-full md:w-auto flex items-center gap-3">
+                          <div className="relative flex-1 md:w-64 group">
+                             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                               <svg className="w-4 h-4 text-gray-400 group-focus-within:text-black transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35"/></svg>
+                             </div>
+                             <input 
+                               type="text" 
+                               placeholder="搜索模版..." 
+                               value={textSearch}
+                               onChange={(e) => setTextSearch(e.target.value)}
+                               className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-black transition-all placeholder-gray-400"
+                             />
+                          </div>
+
+                          <div className="relative">
+                            <button 
+                              onClick={() => setIsSortMenuOpen(!isSortMenuOpen)}
+                              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:border-gray-400 transition-all whitespace-nowrap"
+                            >
+                              <span className="hidden sm:inline text-gray-500">排序:</span>
+                              <span className="capitalize">{sortOptionsMap[sortOption]}</span>
+                              <svg className={`w-3 h-3 transition-transform ${isSortMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            
+                            <AnimatePresence>
+                               {isSortMenuOpen && (
+                                 <motion.div 
+                                   initial={{ opacity: 0, y: -5 }}
+                                   animate={{ opacity: 1, y: 0 }}
+                                   exit={{ opacity: 0, y: -5 }}
+                                   className="absolute top-full right-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 overflow-hidden"
+                                 >
+                                   {(['featured', 'price-asc', 'price-desc', 'rating'] as SortOption[]).map((option) => (
+                                     <button
+                                       key={option}
+                                       onClick={() => { setSortOption(option); setIsSortMenuOpen(false); }}
+                                       className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${sortOption === option ? 'font-medium text-black' : 'text-gray-500'}`}
+                                     >
+                                       <span className="capitalize">{sortOptionsMap[option]}</span>
+                                       {sortOption === option && <span className="w-1 h-1 bg-black rounded-full"></span>}
+                                     </button>
+                                   ))}
+                                 </motion.div>
+                               )}
+                             </AnimatePresence>
+                             {isSortMenuOpen && <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsSortMenuOpen(false)} />}
+                          </div>
+                       </div>
+                     </div>
+                  </div>
+
+                  <main className="px-6 pb-24 max-w-[1800px] mx-auto min-h-[600px]">
+                    {displayedTemplates.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-24 text-center">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                           <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900">未找到相关模版</h3>
+                        <button onClick={() => { clearSearch(); setActiveCategory('全部'); }} className="mt-6 text-black border-b border-black hover:opacity-60 transition-opacity">清空筛选条件</button>
+                      </div>
+                    ) : (
+                      <motion.div 
+                        layout
+                        variants={{
+                          hidden: {},
+                          show: {
+                            transition: {
+                              staggerChildren: 0.06
+                            }
+                          }
+                        }}
+                        initial="hidden"
+                        animate="show"
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10"
+                      >
+                        <AnimatePresence mode='popLayout'>
+                          {displayedTemplates.map((template) => (
+                            <TemplateCard 
+                              key={template.id} 
+                              template={template} 
+                              onClick={handleTemplateClick}
+                            />
+                          ))}
+                        </AnimatePresence>
+                      </motion.div>
+                    )}
+                  </main>
                 </motion.div>
-              )}
-            </main>
-          </motion.div>
-        )}
+             )}
 
-        {/* --- DETAIL VIEW --- */}
-        {currentView === 'detail' && (
-          <ProductModal 
-            key="detail-view"
-            template={selectedTemplate} 
-            allTemplates={MOCK_TEMPLATES}
-            onClose={handleBackToStore}
-            onRelatedClick={handleTemplateClick} 
+             {/* --- DETAIL VIEW --- */}
+             {currentView === 'detail' && selectedTemplate && (
+               <ProductModal 
+                 key="detail-view"
+                 template={selectedTemplate} 
+                 allTemplates={MOCK_TEMPLATES}
+                 onClose={handleBackToStore}
+                 onRelatedClick={handleTemplateClick}
+                 isFavorite={favorites.includes(selectedTemplate.id)}
+                 onToggleFavorite={() => handleToggleFavorite(selectedTemplate)} 
+               />
+             )}
+
+             {/* --- PROFILE VIEW --- */}
+             {currentView === 'profile' && (
+                <motion.div
+                  key="profile"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="absolute inset-0 z-40 bg-[#fcfaf8]"
+                >
+                  <UserProfile 
+                    user={userProfile}
+                    transactions={transactions}
+                    downloadRecords={downloadRecords}
+                    favoriteTemplates={MOCK_TEMPLATES.filter(t => favorites.includes(t.id))}
+                    onLogout={handleLogout}
+                    onUpdateProfile={(updated) => setUserProfile({ ...userProfile, ...updated })}
+                    onTemplateClick={handleTemplateClick}
+                    onHome={handleBackToStore}
+                  />
+                </motion.div>
+             )}
+
+          </AnimatePresence>
+
+          <SearchOverlay 
+            isOpen={isSearchOpen} 
+            onClose={() => setIsSearchOpen(false)}
+            onSearch={handleSmartSearch}
+            isSearching={isSearching}
           />
-        )}
-      </AnimatePresence>
-
-      <SearchOverlay 
-        isOpen={isSearchOpen} 
-        onClose={() => setIsSearchOpen(false)}
-        onSearch={handleSmartSearch}
-        isSearching={isSearching}
-      />
-      
-      {/* --- FOOTER --- */}
-      {currentView !== 'auth' && currentView !== 'profile' && (
-        <footer className="bg-white border-t border-gray-100 py-24 px-6 mt-auto">
-          <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
-            <div className="space-y-4">
-              <h2 className="text-3xl font-serif font-bold tracking-tight">Zelpis TP</h2>
-              <p className="text-gray-400 text-sm max-w-xs">
-                为创作者赋能，打破想象与现实的边界。
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-8 sm:gap-16 text-sm">
-              <div className="flex flex-col gap-4">
-                  <span className="font-bold text-black">平台</span>
-                  <a href="#" className="text-gray-500 hover:text-black transition-colors">浏览</a>
-                  <a href="#" className="text-gray-500 hover:text-black transition-colors">出售</a>
+          
+          <footer className="bg-white border-t border-gray-100 py-24 px-6 mt-auto">
+            <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
+              <div className="space-y-4">
+                <h2 className="text-3xl font-serif font-bold tracking-tight">Zelpis TP</h2>
+                <p className="text-gray-400 text-sm max-w-xs">
+                  为创作者赋能，打破想象与现实的边界。
+                </p>
               </div>
-              <div className="flex flex-col gap-4">
-                  <span className="font-bold text-black">公司</span>
-                  <a href="#" className="text-gray-500 hover:text-black transition-colors">联系我们</a>
+              <div className="flex flex-col sm:flex-row gap-8 sm:gap-16 text-sm">
+                <div className="flex flex-col gap-4">
+                    <span className="font-bold text-black">平台</span>
+                    <a href="#" className="text-gray-500 hover:text-black transition-colors">浏览</a>
+                    <a href="#" className="text-gray-500 hover:text-black transition-colors">出售</a>
+                </div>
+                <div className="flex flex-col gap-4">
+                    <span className="font-bold text-black">公司</span>
+                    <a href="#" className="text-gray-500 hover:text-black transition-colors">联系我们</a>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="max-w-[1800px] mx-auto mt-16 pt-8 border-t border-gray-50 flex justify-between items-center text-xs text-gray-400">
-            <p>© 2024 Zelpis TP Inc.</p>
-            <p>Designed with Gemini.</p>
-          </div>
-        </footer>
+            <div className="max-w-[1800px] mx-auto mt-16 pt-8 border-t border-gray-50 flex justify-between items-center text-xs text-gray-400">
+              <p>© 2024 Zelpis TP Inc.</p>
+              <p>Designed with Gemini.</p>
+            </div>
+          </footer>
+        </>
       )}
     </div>
   );

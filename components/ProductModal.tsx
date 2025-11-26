@@ -8,13 +8,21 @@ interface ProductModalProps {
   allTemplates?: Template[];
   onClose: () => void;
   onRelatedClick?: (template: Template) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
-export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplates = [], onClose, onRelatedClick }) => {
+export const ProductModal: React.FC<ProductModalProps> = ({ 
+  template, 
+  allTemplates = [], 
+  onClose, 
+  onRelatedClick,
+  isFavorite = false,
+  onToggleFavorite
+}) => {
   const [activeTab, setActiveTab] = useState<'details' | 'code' | 'reviews'>('details');
   const [isDownloading, setIsDownloading] = useState(false);
   const [showDownloadPopup, setShowDownloadPopup] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [showFavoritePopup, setShowFavoritePopup] = useState(false);
   const [favoriteAction, setFavoriteAction] = useState<'add' | 'remove'>('add');
   
@@ -24,11 +32,9 @@ export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplat
   const [hoverRating, setHoverRating] = useState(0);
   const [commentInput, setCommentInput] = useState('');
 
-  // Scroll to top when mounted or when template changes
   useEffect(() => {
     window.scrollTo(0, 0);
     setActiveTab('details');
-    setIsFavorite(false);
     
     if (template) {
       setLocalReviews(template.reviews || []);
@@ -44,28 +50,26 @@ export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplat
     .filter(t => t.category === template.category && t.id !== template.id)
     .slice(0, 4);
     
-  // Find other templates by the same author
   const authorTemplates = allTemplates
     .filter(t => t.author === template.author && t.id !== template.id)
     .slice(0, 3);
 
   const handleDownload = () => {
     setIsDownloading(true);
-    // Simulate API call
     setTimeout(() => {
       setIsDownloading(false);
       setShowDownloadPopup(true);
-      // Auto hide popup
       setTimeout(() => setShowDownloadPopup(false), 3000);
     }, 1500);
   };
 
   const toggleFavorite = () => {
     const newStatus = !isFavorite;
-    setIsFavorite(newStatus);
+    if (onToggleFavorite) {
+      onToggleFavorite();
+    }
     setFavoriteAction(newStatus ? 'add' : 'remove');
     setShowFavoritePopup(true);
-    // Reset timer for existing toast or create new one
     setTimeout(() => setShowFavoritePopup(false), 2000);
   };
 
@@ -75,7 +79,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplat
 
     const newReview: Review = {
       id: Date.now().toString(),
-      user: '您', // In a real app, this would come from auth context
+      user: '您', 
       rating: ratingInput,
       comment: commentInput,
       date: '刚刚'
@@ -104,7 +108,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplat
       {/* Toasts Container */}
       <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2 items-center pointer-events-none w-full px-4">
         <AnimatePresence>
-          {/* Download Toast */}
           {showDownloadPopup && (
             <motion.div 
               layout
@@ -120,7 +123,6 @@ export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplat
             </motion.div>
           )}
 
-          {/* Favorite Toast */}
           {showFavoritePopup && (
             <motion.div 
               layout
@@ -487,7 +489,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({ template, allTemplat
                       <span>包含技术支持</span>
                     </div>
                   </div>
-               </div>
+               )}
             </div>
             
           </div>

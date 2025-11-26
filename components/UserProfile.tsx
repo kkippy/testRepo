@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserProfile as UserProfileType, Transaction, DownloadRecord, Template } from '../types';
@@ -11,8 +10,8 @@ interface UserProfileProps {
   favoriteTemplates: Template[];
   onLogout: () => void;
   onUpdateProfile: (updated: Partial<UserProfileType>) => void;
-  onNavigateHome: () => void;
   onTemplateClick: (template: Template) => void;
+  onHome: () => void;
 }
 
 type Tab = 'profile' | 'favorites' | 'downloads' | 'wallet' | 'security';
@@ -22,7 +21,7 @@ interface FoilCardProps {
   children: React.ReactNode;
 }
 
-// --- 3D Tilt Card Implementation ---
+// --- 3D Tilt Card Implementation (Revolut Metal Style) ---
 const FoilCard: React.FC<FoilCardProps> = ({ tier, children }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
@@ -130,8 +129,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   favoriteTemplates,
   onLogout, 
   onUpdateProfile,
-  onNavigateHome,
-  onTemplateClick
+  onTemplateClick,
+  onHome
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [editName, setEditName] = useState(user.name);
@@ -141,6 +140,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   // Security State
   const [oldPass, setOldPass] = useState('');
   const [newPass, setNewPass] = useState('');
+  
+  // Account Deletion State
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
 
   // Recharge Toast State
   const [showRechargeSuccess, setShowRechargeSuccess] = useState(false);
@@ -165,6 +168,20 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     setTimeout(() => {
       setShowRechargeSuccess(false);
     }, 3000);
+  };
+
+  const handleDeleteAccountClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDeleteAccount = () => {
+    setShowDeleteConfirm(false);
+    setShowDeleteSuccess(true);
+    
+    // Simulate API call and redirect
+    setTimeout(() => {
+      onLogout(); // This will effectively redirect to home in the App logic
+    }, 1500);
   };
 
   const TabButton = ({ id, label, icon }: { id: Tab; label: string; icon: React.ReactNode }) => (
@@ -212,10 +229,12 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   return (
     <div className="min-h-screen bg-[#fcfaf8] pt-24 pb-12 px-6 relative">
       
-      {/* Recharge Success Toast */}
+      {/* --- Global Overlays --- */}
       <AnimatePresence>
+        {/* Recharge Success Toast */}
         {showRechargeSuccess && lastRecharge && (
           <motion.div
+            key="recharge-toast"
             initial={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
             animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
             exit={{ opacity: 0, scale: 0.9, y: "-50%", x: "-50%" }}
@@ -235,13 +254,67 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             </div>
           </motion.div>
         )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <motion.div 
+            key="delete-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center border border-gray-100"
+            >
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">确认注销账号？</h3>
+              <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+                此操作将永久删除您的个人资料、收藏夹及下载历史。该操作<span className="font-bold text-red-500">无法撤销</span>。
+              </p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 px-4 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={confirmDeleteAccount}
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors shadow-lg shadow-red-500/20"
+                >
+                  确认注销
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Delete Success Toast */}
+        {showDeleteSuccess && (
+          <motion.div
+             key="delete-success"
+             initial={{ opacity: 0, y: 50 }}
+             animate={{ opacity: 1, y: 0 }}
+             exit={{ opacity: 0 }}
+             className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[100] bg-black/90 backdrop-blur-md text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-3"
+          >
+             <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+             <span className="font-medium">账号已注销，正在跳转首页...</span>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       <div className="max-w-[1400px] mx-auto">
         
         {/* Breadcrumb / Header */}
         <div className="flex items-center gap-2 mb-8 text-sm text-gray-400">
-           <button onClick={onNavigateHome} className="hover:text-black transition-colors">首页</button>
+           <button onClick={onHome} className="hover:text-black transition-colors">首页</button>
            <span>/</span>
            <span className="text-black">个人中心</span>
         </div>
@@ -392,7 +465,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                          </div>
                          <h4 className="text-lg font-medium text-gray-900">暂无收藏</h4>
                          <p className="text-gray-400 text-sm mt-2">浏览商城，发现您心仪的设计。</p>
-                         <button onClick={onNavigateHome} className="mt-6 text-black underline underline-offset-4 text-sm font-medium hover:opacity-70">去逛逛</button>
+                         <button onClick={onHome} className="mt-6 text-black underline underline-offset-4 text-sm font-medium hover:opacity-70">去逛逛</button>
                       </div>
                     )}
                  </div>
@@ -439,7 +512,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                         <p className="text-gray-400 text-sm">当前余额: <span className="text-black font-bold text-lg">{user.credits}</span> 积分</p>
                     </div>
 
-                    {/* Magic Cards Grid */}
+                    {/* 3D Metal Cards Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                       {rechargeTiers.map((tier) => (
                         <FoilCard key={tier.id} tier={tier}>
@@ -492,6 +565,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                         </FoilCard>
                       ))}
                     </div>
+
 
                     {/* Transaction History */}
                     <div className="pt-10 border-t border-gray-100">
@@ -562,7 +636,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                            <div className="font-bold text-gray-900">注销账号</div>
                            <p className="text-xs text-gray-500 mt-1">此操作不可逆，您的所有数据将被永久删除。</p>
                         </div>
-                        <button className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-600 hover:text-white transition-colors">
+                        <button 
+                          onClick={handleDeleteAccountClick}
+                          className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-600 hover:text-white transition-colors"
+                        >
                           注销账号
                         </button>
                      </div>
