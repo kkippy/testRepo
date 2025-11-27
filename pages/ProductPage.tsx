@@ -7,9 +7,10 @@ import { Template } from '../types';
 interface ProductPageProps {
   favorites: string[];
   onToggleFavorite: (template: Template) => void;
+  onDownloaded: (template: Template) => void;
 }
 
-export const ProductPage: React.FC<ProductPageProps> = ({ favorites, onToggleFavorite }) => {
+export const ProductPage: React.FC<ProductPageProps> = ({ favorites, onToggleFavorite, onDownloaded }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -43,6 +44,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({ favorites, onToggleFav
       onRelatedClick={handleRelatedClick}
       isFavorite={favorites.includes(template.id)}
       onToggleFavorite={() => onToggleFavorite(template)}
+      onDownload={(t) => onDownloaded(t)}
     />
   );
 };

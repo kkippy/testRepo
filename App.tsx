@@ -104,6 +104,16 @@ const App: React.FC = () => {
 
   const favoriteTemplates = MOCK_TEMPLATES.filter(t => favorites.includes(t.id));
 
+  const recordDownload = (template: Template) => {
+    const entry: DownloadRecord = {
+      id: Date.now().toString(),
+      templateId: template.id,
+      templateTitle: template.title,
+      date: new Date().toLocaleString('zh-CN', { hour12: false })
+    };
+    setDownloadRecords(prev => [entry, ...prev]);
+  };
+
   return (
     <div className="min-h-screen bg-[#fcfaf8] text-primary font-sans selection:bg-orange-200 selection:text-orange-900 relative overflow-x-hidden">
       
@@ -151,7 +161,7 @@ const App: React.FC = () => {
       )}
 
       <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
+        <Routes location={location}>
           <Route path="/" element={
             <HomePage 
               searchResult={searchResult}
@@ -170,6 +180,7 @@ const App: React.FC = () => {
             <ProductPage 
               favorites={favorites}
               onToggleFavorite={handleToggleFavorite}
+              onDownloaded={recordDownload}
             />
           } />
 

@@ -136,6 +136,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const [editName, setEditName] = useState(user.name);
   const [editBio, setEditBio] = useState(user.bio);
   const [isEditing, setIsEditing] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
 
   // Security State
   const [oldPass, setOldPass] = useState('');
@@ -152,6 +155,34 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const handleSaveProfile = () => {
     onUpdateProfile({ name: editName, bio: editBio });
     setIsEditing(false);
+  };
+
+  const isImageAvatar = typeof user.avatar === 'string' && (user.avatar.startsWith('http') || user.avatar.startsWith('data:image'));
+  const handleAvatarClick = () => {
+    setShowAvatarModal(true);
+  };
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return;
+    const url = await readAndCropToDataURL(file, 256);
+    setPreviewUrl(url);
+  };
+  const confirmSaveAvatar = async () => {
+    if (!previewUrl) return;
+    setIsSavingAvatar(true);
+    setTimeout(() => {
+      onUpdateProfile({ avatar: previewUrl });
+      setIsSavingAvatar(false);
+      setShowAvatarModal(false);
+      setPreviewUrl(null);
+    }, 600);
+  };
+  const resetAvatarToInitial = () => {
+    const initial = user.name?.charAt(0) || 'U';
+    onUpdateProfile({ avatar: initial });
+    setShowAvatarModal(false);
+    setPreviewUrl(null);
   };
 
   const handleRecharge = (tier: any) => {
@@ -325,11 +356,18 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           <div className="lg:col-span-3">
              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-24">
                 <div className="flex flex-col items-center text-center mb-8">
-                   <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center text-2xl font-serif font-bold text-orange-900 mb-4 shadow-inner">
-                     {user.avatar}
-                   </div>
-                   <h2 className="text-xl font-bold text-gray-900">{user.name}</h2>
-                   <p className="text-sm text-gray-400 mt-1">{user.email}</p>
+                  <button onClick={handleAvatarClick} className="group w-20 h-20 rounded-full mb-4 overflow-hidden relative shadow-inner focus:outline-none">
+                    {isImageAvatar ? (
+                      <img src={user.avatar} alt="avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center text-2xl font-serif font-bold text-orange-900">
+                        {user.avatar}
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+                  </button>
+                  <h2 className="text-xl font-bold text-gray-900">{user.name}</h2>
+                  <p className="text-sm text-gray-400 mt-1">{user.email}</p>
                 </div>
 
                 <nav className="space-y-2">
@@ -647,10 +685,73 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                  </div>
                )}
 
-             </motion.div>
+            </motion.div>
           </div>
         </div>
       </div>
+      <AnimatePresence>
+        {showAvatarModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border border-gray-100"
+            >
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-gray-900">更换头像</h3>
+                <p className="text-sm text-gray-500 mt-1">支持上传图片，自动裁剪为正方形。</p>
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="w-24 h-24 rounded-full overflow-hidden border border-gray-200">
+                  {previewUrl ? (
+                    <img src={previewUrl} alt="preview" className="w-full h-full object-cover" />
+                  ) : isImageAvatar ? (
+                    <img src={user.avatar} alt="current" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center text-2xl font-serif font-bold text-gray-600">
+                      {user.avatar}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <label className="block">
+                    <input type="file" accept="image/*" onChange={handleAvatarFileChange} className="block w-full text-sm" />
+                  </label>
+                  <p className="text-xs text-gray-400 mt-2">建议尺寸≥256×256，文件小于 2MB。</p>
+                </div>
+              </div>
+              <div className="mt-8 flex gap-3">
+                <button onClick={() => setShowAvatarModal(false)} className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors">取消</button>
+                <button onClick={resetAvatarToInitial} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors">恢复默认</button>
+                <button onClick={confirmSaveAvatar} disabled={!previewUrl || isSavingAvatar} className="px-4 py-2 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isSavingAvatar ? '保存中...' : '保存头像'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
+
+async function readAndCropToDataURL(file: File, size: number): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '';
+  const minSide = Math.min(bitmap.width, bitmap.height);
+  const sx = (bitmap.width - minSide) / 2;
+  const sy = (bitmap.height - minSide) / 2;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bitmap, sx, sy, minSide, minSide, 0, 0, size, size);
+  return canvas.toDataURL('image/png');
+}

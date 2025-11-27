@@ -9,6 +9,7 @@ interface ProductDetailProps {
   onRelatedClick?: (template: Template) => void;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  onDownload?: (template: Template) => void;
 }
 
 export const ProductDetail: React.FC<ProductDetailProps> = ({ 
@@ -16,7 +17,8 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
   allTemplates = [], 
   onRelatedClick,
   isFavorite = false,
-  onToggleFavorite
+  onToggleFavorite,
+  onDownload
 }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'details' | 'code' | 'reviews'>('details');
@@ -53,6 +55,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
 
   const handleDownload = () => {
     setIsDownloading(true);
+    if (onDownload) {
+      onDownload(template);
+    }
     setTimeout(() => {
       setIsDownloading(false);
       setShowDownloadPopup(true);
@@ -456,7 +461,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                            </>
                          ) : (
                            <>
-                             <span>立即获取</span>
+                             <span>立即下载</span>
                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                            </>
                          )}
