@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Template, SortOption, TemplateCategory } from '../types';
 import { TemplateCard } from '../components/TemplateCard';
-import { HeroIllustration } from '../components/HeroIllustration';
+import { HeroCarousel } from '../components/HeroCarousel';
 import { MOCK_TEMPLATES, CATEGORIES } from '../utils/mockData';
 
 interface HomePageProps {
@@ -84,42 +84,26 @@ export const HomePage: React.FC<HomePageProps> = ({
       transition={{ duration: 0.4 }}
       className="min-h-screen"
     >
-      <header className="px-6 pt-12 pb-4 md:pt-20 md:pb-8 max-w-[1800px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div className="lg:col-span-7 xl:col-span-8 space-y-6 z-10">
-             {searchResult ? (
-               <div className="space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-xs font-bold tracking-wider text-orange-700 uppercase">
-                    AI 甄选
-                  </div>
-                  <h1 className="text-4xl md:text-6xl font-serif leading-tight text-gray-900">
-                    "{searchResult.reason}"
-                  </h1>
-                  <button 
-                    onClick={clearSearch} 
-                    className="group flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-black transition-colors mt-4"
-                  >
-                    <span className="border-b border-gray-300 group-hover:border-black pb-0.5">返回全部模版</span>
-                  </button>
-               </div>
-             ) : (
-               <div>
-                 <h1 className="text-6xl md:text-8xl font-serif font-medium leading-[0.9] tracking-tighter text-gray-900">
-                    设计 · 模版 <br/>
-                    <span className="text-gray-300 italic pl-4">灵感库</span>
-                  </h1>
-                  <p className="text-lg text-gray-500 mt-6 max-w-md leading-relaxed font-light pl-2 border-l-2 border-orange-100">
-                    为现代创作者甄选的数字资产。极致的美学标准，流畅的交互体验。
-                  </p>
-               </div>
-             )}
+      {searchResult ? (
+        <header className="px-6 pt-12 pb-4 md:pt-20 md:pb-8 max-w-[1800px] mx-auto">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-xs font-bold tracking-wider text-orange-700 uppercase">
+              AI 甄选
+            </div>
+            <h1 className="text-4xl md:text-6xl font-serif leading-tight text-gray-900">
+              "{searchResult.reason}"
+            </h1>
+            <button 
+              onClick={clearSearch} 
+              className="group flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-black transition-colors mt-4"
+            >
+              <span className="border-b border-gray-300 group-hover:border-black pb-0.5">返回全部模版</span>
+            </button>
           </div>
-
-          <div className="lg:col-span-5 xl:col-span-4 hidden lg:block">
-             <HeroIllustration />
-          </div>
-        </div>
-      </header>
+        </header>
+      ) : (
+        <HeroCarousel featuredTemplates={MOCK_TEMPLATES.slice(0, 5)} />
+      )}
 
       {/* Toolbar */}
       <div className="sticky top-[73px] z-40 bg-[#fcfaf8]/95 backdrop-blur-md border-b border-gray-200/50 py-3 px-6 mb-8 transition-all shadow-sm">

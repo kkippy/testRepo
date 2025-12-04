@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Template, Review } from '../types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 interface ProductDetailProps {
   template: Template;
@@ -122,6 +122,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
               </div>
               <span className="font-medium text-sm">文件下载成功！</span>
+              <Link to="/profile?tab=downloads" className="text-sm font-bold text-white underline underline-offset-4 hover:text-gray-200 transition-colors ml-1">查看</Link>
             </motion.div>
           )}
 

@@ -12,9 +12,10 @@ interface UserProfileProps {
   onUpdateProfile: (updated: Partial<UserProfileType>) => void;
   onTemplateClick: (template: Template) => void;
   onHome: () => void;
+  initialTab?: Tab;
 }
 
-type Tab = 'profile' | 'favorites' | 'downloads' | 'wallet' | 'security';
+export type Tab = 'profile' | 'favorites' | 'downloads' | 'wallet' | 'security';
 
 interface FoilCardProps {
   tier: any;
@@ -130,9 +131,17 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   onLogout, 
   onUpdateProfile,
   onTemplateClick,
-  onHome
+  onHome,
+  initialTab = 'profile'
 }) => {
-  const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
+  
+  React.useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
   const [editName, setEditName] = useState(user.name);
   const [editBio, setEditBio] = useState(user.bio);
   const [isEditing, setIsEditing] = useState(false);
