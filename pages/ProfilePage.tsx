@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { UserProfile } from '../components/UserProfile';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { UserProfile, Tab } from '../components/UserProfile';
 import { UserProfile as UserProfileType, Transaction, DownloadRecord, Template } from '../types';
 
 interface ProfilePageProps {
@@ -21,6 +21,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   onUpdateProfile
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Parse query params
+  const searchParams = new URLSearchParams(location.search);
+  const tabParam = searchParams.get('tab');
+  
+  // Validate tab param
+  const validTabs: Tab[] = ['profile', 'favorites', 'downloads', 'wallet', 'security'];
+  const initialTab = validTabs.includes(tabParam as Tab) ? (tabParam as Tab) : 'profile';
 
   const handleLogout = () => {
     onLogout();
@@ -41,6 +50,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
       onUpdateProfile={onUpdateProfile}
       onTemplateClick={handleTemplateClick}
       onHome={() => navigate('/')}
+      initialTab={initialTab}
     />
   );
 };
