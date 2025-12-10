@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { Template } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +6,49 @@ import { useNavigate } from 'react-router-dom';
 interface HeroCarouselProps {
   featuredTemplates: Template[];
 }
+
+const FloatingParticles = () => {
+  const particles = useMemo(() => {
+    return Array.from({ length: 35 }).map((_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 4 + 2,
+      duration: Math.random() * 15 + 10,
+      delay: Math.random() * 5,
+      xOffset: Math.random() * 100 - 50 // Increased horizontal movement
+    }));
+  }, []);
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]">
+      {particles.map((p) => (
+        <motion.div
+          key={p.id}
+          className="absolute rounded-full bg-orange-100/30 blur-[1px]"
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: p.size,
+            height: p.size,
+          }}
+          animate={{
+            y: [0, -120, 0],
+            x: [0, p.xOffset, 0],
+            opacity: [0, 0.8, 0], // Increased opacity for better visibility
+            scale: [0.5, 1.2, 0.5],
+          }}
+          transition={{
+            duration: p.duration,
+            repeat: Infinity,
+            delay: p.delay,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 const FolderCard = ({ template, navigate, isBack = false }: { template: Template; navigate: (path: string) => void; isBack?: boolean }) => {
   return (
@@ -20,19 +63,39 @@ const FolderCard = ({ template, navigate, isBack = false }: { template: Template
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="w-full h-full relative transform-style-3d"
       >
-        {/* Shadow Layer */}
-        <div className="absolute inset-0 bg-black/60 rounded-2xl blur-2xl transform translate-y-12 translate-z-[-40px] opacity-60" />
+        {/* Realistic Shadow Layers for Depth */}
+        <div className="absolute inset-4 rounded-[24px] bg-black/40 blur-xl transform translate-y-8 translate-z-[-20px]" />
+        <div className="absolute inset-4 rounded-[24px] bg-black/60 blur-2xl transform translate-y-16 translate-z-[-40px] opacity-70" />
 
-        {/* Card Body */}
-        <div className="w-full h-full relative rounded-2xl border border-white/20 bg-stone-800 overflow-hidden shadow-[20px_20px_60px_rgba(0,0,0,0.5)] z-10">
+        {/* Main Card Body - Skeuomorphic Design */}
+          <div className="w-full h-full relative rounded-[24px] overflow-hidden z-10 bg-[#1a1a1a] transform-style-3d shadow-2xl">
+            
+            {/* Realistic Glass Border Structure */}
+            <div className="absolute inset-0 z-50 rounded-[24px] pointer-events-none">
+              {/* 1. Sharp Outer Edge (Rim Light) */}
+              <div className="absolute inset-0 rounded-[24px] border border-white/20" />
+              
+              {/* 2. Inner Thick Glass Highlight (Top/Left dominant) - Simulates glass thickness */}
+              <div className="absolute inset-0 rounded-[24px] shadow-[inset_1.5px_1.5px_0_0_rgba(255,255,255,0.5),inset_-1px_-1px_0_0_rgba(255,255,255,0.1)]" />
+              
+              {/* 3. Subtle Inner Glow to simulate volume */}
+              <div className="absolute inset-0 rounded-[24px] shadow-[inset_0_0_20px_rgba(255,255,255,0.05)]" />
+            </div>
+
+            {/* Image Layer */}
           <img 
             src={template.imageUrl} 
             alt={template.title}
             className={`w-full h-full object-cover transition-all duration-700 ${isBack ? 'grayscale opacity-50' : 'grayscale-0 opacity-100'}`}
           />
           
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+          {/* Glass Gloss / Reflection Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-transparent opacity-60 z-20 pointer-events-none" />
+          
+          {/* Dynamic Sheen Effect on Hover - Removed */}
+          
+          {/* Content Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10" />
         </div>
 
         {/* Floating Elements (Only for Front Card) */}
@@ -129,6 +192,9 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ featuredTemplates })
            <div className="absolute inset-0 bg-gradient-to-b from-stone-900/40 via-stone-900/60 to-stone-900" />
         </motion.div>
       </AnimatePresence>
+
+      {/* Floating Particles */}
+      <FloatingParticles />
 
       {/* --- Main Content Grid --- */}
       <div className="relative z-10 w-full h-full flex items-center">
