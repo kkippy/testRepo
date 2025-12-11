@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { Template } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { OptimizedImage } from './OptimizedImage';
 
 interface HeroCarouselProps {
   featuredTemplates: Template[];
@@ -83,9 +84,10 @@ const FolderCard = ({ template, navigate, isBack = false }: { template: Template
             </div>
 
             {/* Image Layer */}
-          <img 
+          <OptimizedImage 
             src={template.imageUrl} 
             alt={template.title}
+            priority={!isBack}
             className={`w-full h-full object-cover transition-all duration-700 ${isBack ? 'grayscale opacity-50' : 'grayscale-0 opacity-100'}`}
           />
           
@@ -133,6 +135,20 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ featuredTemplates })
     }, 8000);
     return () => clearInterval(timer);
   }, [featuredTemplates.length]);
+
+  // Image Preloading Logic
+  useEffect(() => {
+    const nextIndex1 = (activeIndex + 1) % featuredTemplates.length;
+    const nextIndex2 = (activeIndex + 2) % featuredTemplates.length;
+    
+    const preloadImage = (src: string) => {
+      const img = new Image();
+      img.src = src;
+    };
+
+    if (featuredTemplates[nextIndex1]) preloadImage(featuredTemplates[nextIndex1].imageUrl);
+    if (featuredTemplates[nextIndex2]) preloadImage(featuredTemplates[nextIndex2].imageUrl);
+  }, [activeIndex, featuredTemplates]);
 
   const handleDotClick = (idx: number) => {
     setDirection(idx > activeIndex ? 1 : -1);
@@ -184,9 +200,10 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ featuredTemplates })
           transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
           className="absolute inset-0 z-0"
         >
-           <img 
+           <OptimizedImage 
              src={activeTemplate.imageUrl} 
              alt="bg" 
+             priority={true}
              className="w-full h-full object-cover blur-3xl brightness-50"
            />
            <div className="absolute inset-0 bg-gradient-to-b from-stone-900/40 via-stone-900/60 to-stone-900" />

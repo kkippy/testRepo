@@ -36,6 +36,27 @@ export const HomePage: React.FC<HomePageProps> = ({
   // Horizontal scroll ref and handler
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const scrollWrapperRef = React.useRef<HTMLDivElement>(null);
+  
+  // Sticky state
+  const [isSticky, setIsSticky] = React.useState(false);
+  const stickyRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      if (stickyRef.current) {
+        const rect = stickyRef.current.getBoundingClientRect();
+        // 当 sentinel 触顶或滚出顶部时，触发吸顶状态
+        // 使用 1px 的 buffer 避免边缘闪烁
+        setIsSticky(rect.top <= 1);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // 初始化检查
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   React.useEffect(() => {
     const wrapper = scrollWrapperRef.current;
@@ -136,8 +157,15 @@ export const HomePage: React.FC<HomePageProps> = ({
         <HeroCarousel featuredTemplates={MOCK_TEMPLATES.slice(0, 5)} />
       )}
 
+      {/* Toolbar Sentinel */}
+      <div ref={stickyRef} />
+
       {/* Toolbar */}
-      <div className="sticky top-[73px] z-40 bg-[#fcfaf8]/95 backdrop-blur-md border-b border-gray-200/50 py-3 px-6 mb-8 transition-all shadow-sm">
+      <div className={`sticky top-0 z-[60] px-6 mb-8 transition-all duration-300 ${
+        isSticky 
+          ? 'bg-[#fcfaf8]/85 backdrop-blur-xl border-b border-gray-200/50 shadow-sm py-3' 
+          : 'bg-[#fcfaf8] py-4 border-b border-transparent'
+      }`}>
          <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
            
            {/* Categories - Optimized with Expandable View */}

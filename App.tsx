@@ -5,6 +5,7 @@ import { Template, SortOption, UserProfile as UserProfileType, Transaction, Down
 import { SearchOverlay } from './components/SearchOverlay';
 import { Confetti } from './components/Confetti';
 import { Header } from './components/Header';
+import { Footer } from './components/Footer';
 import { getSmartRecommendations } from './services/geminiService';
 import { MOCK_TEMPLATES } from './utils/mockData';
 
@@ -115,7 +116,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfaf8] text-primary font-sans selection:bg-orange-200 selection:text-orange-900 relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#fcfaf8] text-primary font-sans selection:bg-orange-200 selection:text-orange-900 relative">
       
       {/* Confetti Overlay */}
       {showConfetti && <Confetti />}
@@ -205,6 +206,9 @@ const App: React.FC = () => {
           } />
         </Routes>
       </AnimatePresence>
+
+      {/* Footer */}
+      {location.pathname !== '/login' && <Footer />}
     </div>
   );
 };

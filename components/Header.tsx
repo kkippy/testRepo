@@ -20,7 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const isImageAvatar = typeof userProfile.avatar === 'string' && (userProfile.avatar.startsWith('http') || userProfile.avatar.startsWith('data:image'));
   return (
-    <nav className="sticky top-0 z-50 bg-[#fcfaf8]/80 backdrop-blur-xl border-b border-gray-200/50 transition-all">
+    <nav className="relative z-50 bg-[#fcfaf8] border-b border-gray-200/50 transition-all">
       <div className="max-w-[1800px] mx-auto px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-2 cursor-pointer group" onClick={onLogoClick}>
           <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform duration-300">
