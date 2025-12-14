@@ -29,6 +29,22 @@ export const config = {
   ]
 };`;
 
+    const usageSteps = [
+      "下载并解压模版文件包",
+      "使用终端进入项目目录：cd project-name",
+      "安装依赖：npm install 或 yarn",
+      "启动开发服务器：npm run dev",
+      "根据文档说明修改配置文件"
+    ];
+
+    const serviceTagOptions = [
+      { label: '长期维护', color: 'green' },
+      { label: '技术支持', color: 'blue' },
+      { label: '社区驱动', color: 'purple' },
+      { label: '官方推荐', color: 'orange' },
+      { label: '限时特惠', color: 'red' }
+    ] as const;
+
     const titles = [
       "Lumina 筑梦集", "Apex 极速电商", "Zenith 博客", "Nexus 仪表盘", "Flux 落地页", 
       "Orbit 创意代理", "Stellar 个人主页", "Vortex SaaS系统", "Echo 资讯网", "Pulse 后台管理",
@@ -74,16 +90,63 @@ export const config = {
           id: 'r1',
           user: reviewsList[i % 4].user,
           rating: 5,
-          date: '2 天前',
-          comment: reviewsList[i % 4].comment
+          date: '2023-10-25 14:30:00',
+          comment: reviewsList[i % 4].comment,
+          likes: 12 + i,
+          replies: i % 2 === 0 ? [
+            {
+              user: "作者",
+              isDesigner: true,
+              content: "感谢您的认可！新版本即将发布，敬请期待更多功能。",
+              date: "2023-10-26 09:15:00"
+            },
+            {
+              user: "张伟",
+              isDesigner: false,
+              content: "确实，我也觉得这个交互很棒，尤其是移动端的适配。",
+              date: "2023-10-26 10:20:00"
+            }
+          ] : undefined
         },
         {
           id: 'r2',
           user: reviewsList[(i + 1) % 4].user,
           rating: 4.5,
-          date: '1 周前',
-          comment: reviewsList[(i + 1) % 4].comment
+          date: '2023-10-20 18:45:12',
+          comment: reviewsList[(i + 1) % 4].comment,
+          likes: 5
         }
+      ],
+      demoVideoUrl: 'https://cdn.coverr.co/videos/coverr-scrolling-through-code-4566/1080p.mp4',
+      screenshots: [
+        { url: `https://picsum.photos/1200/800?random=${i + 200}`, caption: 'Dashboard Overview', device: 'desktop' },
+        { url: `https://picsum.photos/400/800?random=${i + 300}`, caption: 'Mobile Menu', device: 'mobile' },
+        { url: `https://picsum.photos/1200/800?random=${i + 400}`, caption: 'Analytics View', device: 'desktop' },
+        { url: `https://picsum.photos/1200/800?random=${i + 500}`, caption: 'Settings Panel', device: 'desktop' }
+      ],
+      featureHighlights: [
+        {
+          title: '支持深色模式',
+          description: '一键切换深色/浅色主题，完美适配系统设置，提供舒适的夜间阅读体验。',
+          mediaUrl: 'https://cdn.coverr.co/videos/coverr-working-on-a-laptop-at-night-4527/1080p.mp4'
+        },
+        {
+          title: '响应式布局',
+          description: '基于流体网格系统，确保内容在从 4K 屏幕到移动设备的任何尺寸下都完美呈现。',
+          mediaUrl: 'https://cdn.coverr.co/videos/coverr-scrolling-on-mobile-phone-4394/1080p.mp4'
+        },
+        {
+          title: '交互式图表',
+          description: '内置高性能数据可视化组件，支持实时数据更新和丰富的交互动画。',
+          mediaUrl: 'https://cdn.coverr.co/videos/coverr-analyzing-graphs-on-screen-5473/1080p.mp4'
+        }
+      ],
+      usageSteps: usageSteps,
+      serviceTags: [
+        serviceTagOptions[0], // 长期维护
+        serviceTagOptions[1], // 技术支持
+        ...(i % 3 === 0 ? [serviceTagOptions[2]] : []), // 社区驱动
+        ...(i % 5 === 0 ? [serviceTagOptions[3]] : [])  // 官方推荐
       ]
     };
   });

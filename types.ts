@@ -14,6 +14,13 @@ export interface Review {
   rating: number;
   comment: string;
   date: string;
+  likes: number;
+  replies?: {
+    user: string;
+    isDesigner: boolean;
+    content: string;
+    date: string;
+  }[];
 }
 
 export interface Template {
@@ -29,6 +36,22 @@ export interface Template {
   dslCode: string;
   previewUrl: string;
   reviews: Review[];
+  demoVideoUrl?: string;
+  screenshots?: {
+    url: string;
+    caption?: string;
+    device?: 'desktop' | 'mobile' | 'tablet';
+  }[];
+  featureHighlights?: {
+    title: string;
+    description: string;
+    mediaUrl: string;
+  }[];
+  usageSteps?: string[];
+  serviceTags?: {
+    label: string;
+    color: 'green' | 'blue' | 'purple' | 'orange' | 'red';
+  }[];
 }
 
 export interface AIRecommendationResponse {
