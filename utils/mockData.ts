@@ -77,7 +77,7 @@ export const config = {
       id: id,
       title: titles[i % titles.length] + ` ${Math.floor(i / titles.length) + 1}`,
       author: authors[i % authors.length],
-      price: 29 + (i % 8) * 10 + (i % 2 === 0 ? 9 : 0),
+      price: i < 3 ? 0 : 29 + (i % 8) * 10 + (i % 2 === 0 ? 9 : 0),
       category: category,
       description: `这是一个${category}类别的顶级模版。${descriptions[i % descriptions.length]} 完美适合希望提升数字形象的专业人士。`,
       imageUrl: `https://picsum.photos/1200/750?random=${i + 100}`,
@@ -117,7 +117,7 @@ export const config = {
           likes: 5
         }
       ],
-      demoVideoUrl: 'https://cdn.coverr.co/videos/coverr-scrolling-through-code-4566/1080p.mp4',
+      demoVideoUrl: 'https://cdn.coverr.co/videos/coverr-analyzing-graphs-on-screen-5473/1080p.mp4',
       screenshots: [
         { url: `https://picsum.photos/1200/800?random=${i + 200}`, caption: 'Dashboard Overview', device: 'desktop' },
         { url: `https://picsum.photos/400/800?random=${i + 300}`, caption: 'Mobile Menu', device: 'mobile' },

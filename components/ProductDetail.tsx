@@ -370,7 +370,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                                 {template.author.charAt(0)}
                               </div>
                               <div>
-                                <h3 className="text-lg font-bold text-gray-900">设计者寄语</h3>
+                                <h3 className="text-lg font-bold text-gray-900">设计者介绍</h3>
                                 <p className="text-sm text-gray-500">From {template.author}</p>
                               </div>
                            </div>

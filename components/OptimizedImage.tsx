@@ -43,7 +43,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         onLoad={() => setIsLoaded(true)}
         className={`w-full h-full object-cover transition-opacity duration-700 ease-in-out ${
           isLoaded ? 'opacity-100' : 'opacity-0'
-        } ${props.className || ''}`}
+        }`}
         {...props}
       />
     </div>

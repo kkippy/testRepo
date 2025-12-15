@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Template, SortOption, TemplateCategory } from '../types';
 import { TemplateCard } from '../components/TemplateCard';
+import { SkeletonTemplateCard } from '../components/SkeletonTemplateCard';
 import { HeroCarousel } from '../components/HeroCarousel';
 import { MOCK_TEMPLATES, CATEGORIES } from '../utils/mockData';
 
@@ -16,6 +17,9 @@ interface HomePageProps {
   setSortOption: (option: SortOption) => void;
   onTemplateClick: (template: Template) => void;
 }
+
+const GAP_X = 32;
+const GAP_Y = 48;
 
 export const HomePage: React.FC<HomePageProps> = ({
   searchResult,
@@ -32,6 +36,16 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [isFilterOpen, setIsFilterOpen] = React.useState(false);
   const [priceRange, setPriceRange] = React.useState<{ min: string; max: string }>({ min: '', max: '' });
   const [minRating, setMinRating] = React.useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  // Simulate loading on filter change
+  useEffect(() => {
+    setIsLoading(true);
+    setVisibleCount(12); // Reset visible count on filter change
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, [activeCategory, searchResult, textSearch, sortOption, priceRange, minRating]);
 
   // Horizontal scroll ref and handler
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
@@ -83,7 +97,9 @@ export const HomePage: React.FC<HomePageProps> = ({
       filtered = filtered.filter(t => searchResult.ids.includes(t.id));
     }
 
-    if (activeCategory !== '全部') {
+    if (activeCategory === '免费') {
+      filtered = filtered.filter(t => t.price === 0);
+    } else if (activeCategory !== '全部') {
       filtered = filtered.filter(t => t.category === activeCategory);
     }
 
@@ -177,7 +193,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 ref={scrollContainerRef}
                 className="flex items-center gap-2 overflow-x-auto max-w-[calc(100vw-40px)] md:max-w-xl pb-4 mask-image-linear-gradient-to-r [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-gray-300"
               >
-                {['全部', ...CATEGORIES].map(cat => (
+                {['全部', '免费', ...CATEGORIES].map(cat => (
                   <button
                     key={cat}
                     onClick={() => setActiveCategory(cat)}
@@ -359,32 +375,49 @@ export const HomePage: React.FC<HomePageProps> = ({
          </AnimatePresence>
       </div>
 
-      <main className="max-w-[1800px] mx-auto px-6 pb-24">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
-          {displayedTemplates.map((template, index) => (
-            <TemplateCard 
-              key={template.id} 
-              template={template} 
-              index={index}
-              onClick={onTemplateClick}
-            />
-          ))}
-        </div>
-        
-        {displayedTemplates.length === 0 && (
+      <main className="max-w-[1800px] mx-auto px-6 pb-24 min-h-[500px]">
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <SkeletonTemplateCard key={i} />
+            ))}
+          </div>
+        ) : displayedTemplates.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
+              {displayedTemplates.slice(0, visibleCount).map((template) => (
+                <TemplateCard 
+                  key={template.id}
+                  template={template} 
+                  onClick={onTemplateClick}
+                />
+              ))}
+            </div>
+            
+            {visibleCount < displayedTemplates.length && (
+              <div className="mt-16 flex justify-center">
+                <button
+                  onClick={() => setVisibleCount(prev => prev + 12)}
+                  className="px-12 py-4 bg-primary text-white border border-primary rounded-full font-medium hover:bg-primary/90 hover:border-primary/90 hover:shadow-md transition-all duration-300 active:scale-95 flex items-center gap-2 group"
+                >
+                  <span>加载更多</span>
+                  <svg className="w-4 h-4 text-white/80 group-hover:text-white transition-colors group-hover:translate-y-0.5 transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
            <div className="py-32 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
-              <h3 className="text-xl font-medium text-gray-900">未找到相关模版</h3>
-              <p className="text-gray-500 mt-2">尝试更换关键词或清除筛选条件</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">未找到相关模版</h3>
+              <p className="text-gray-500">试试调整筛选条件或搜索关键词</p>
               <button 
-                onClick={() => {
-                   clearSearch();
-                   setActiveCategory('全部');
-                   setTextSearch('');
-                }}
-                className="mt-6 px-6 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
+                onClick={clearSearch}
+                className="mt-6 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
               >
                 清除所有筛选
               </button>

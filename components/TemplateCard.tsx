@@ -114,7 +114,7 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick })
         {/* Top Tags */}
         <div className="absolute top-4 left-4 flex flex-wrap gap-2 z-10">
            <span className="bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold text-black shadow-sm">
-             {template.category}
+             {template.price === 0 ? '免费' : template.category}
            </span>
         </div>
 

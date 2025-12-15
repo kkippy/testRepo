@@ -82,7 +82,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       user: '您', 
       rating: ratingInput,
       comment: commentInput,
-      date: '刚刚'
+      date: '刚刚',
+      likes: 0
     };
 
     setLocalReviews([newReview, ...localReviews]);
