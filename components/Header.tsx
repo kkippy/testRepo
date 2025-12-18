@@ -30,13 +30,6 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         
         <div className="flex items-center gap-4">
-            <button 
-            onClick={onSearchClick}
-          className="group flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-900 rounded-full transition-all duration-300"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <span className="text-sm font-medium hidden sm:inline">询问 Zelpis AI</span>
-          </button>
 
           {isAuthenticated ? (
             <button 

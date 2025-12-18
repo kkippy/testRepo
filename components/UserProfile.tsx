@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Table, Pagination, ConfigProvider } from 'antd';
 import { UserProfile as UserProfileType, Transaction, DownloadRecord, Template } from '../types';
 import { TemplateCard } from './TemplateCard';
+import { MOCK_TEMPLATES } from '../utils/mockData';
 
 interface UserProfileProps {
   user: UserProfileType;
@@ -160,6 +162,76 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   // Recharge Toast State
   const [showRechargeSuccess, setShowRechargeSuccess] = useState(false);
   const [lastRecharge, setLastRecharge] = useState<{ amount: number; credits: number } | null>(null);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  // Forgot Password State
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [isSendingReset, setIsSendingReset] = useState(false);
+  const [showResetSuccess, setShowResetSuccess] = useState(false);
+
+  // Download History State
+  const [downloadSearch, setDownloadSearch] = useState('');
+  const [downloadFilter, setDownloadFilter] = useState('all');
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  
+  // Download Pagination
+  const [downloadPage, setDownloadPage] = useState(1);
+  const downloadPageSize = 10;
+
+  React.useEffect(() => {
+    setDownloadPage(1);
+  }, [downloadSearch, downloadFilter]);
+
+  const filteredDownloads = React.useMemo(() => {
+    return downloadRecords.map(record => {
+      const template = MOCK_TEMPLATES.find(t => t.id === record.templateId);
+      return {
+        ...record,
+        category: template?.category || '其他',
+        imageUrl: template?.imageUrl,
+        template // Keep reference for click handlers if needed
+      };
+    }).filter(item => {
+      const matchesSearch = item.templateTitle.toLowerCase().includes(downloadSearch.toLowerCase());
+      const matchesType = downloadFilter === 'all' || item.category === downloadFilter;
+      return matchesSearch && matchesType;
+    });
+  }, [downloadRecords, downloadSearch, downloadFilter]);
+
+  const handleForgotPassword = () => {
+    if (!forgotEmail) {
+      alert('请输入邮箱');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(forgotEmail)) {
+        alert('请输入有效的邮箱地址');
+        return;
+    }
+
+    setIsSendingReset(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsSendingReset(false);
+      setShowForgotPassword(false);
+      setShowResetSuccess(true);
+      setTimeout(() => {
+        setShowResetSuccess(false);
+        setForgotEmail('');
+      }, 3000);
+    }, 1500);
+  };
+
+  React.useEffect(() => {
+    const maxPage = Math.ceil(favoriteTemplates.length / itemsPerPage) || 1;
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage);
+    }
+  }, [favoriteTemplates.length]);
 
   const handleSaveProfile = () => {
     onUpdateProfile({ name: editName, bio: editBio });
@@ -348,6 +420,83 @@ export const UserProfile: React.FC<UserProfileProps> = ({
              <span className="font-medium">账号已注销，正在跳转首页...</span>
           </motion.div>
         )}
+        {showForgotPassword && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full border border-gray-100"
+            >
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-gray-900">找回密码</h3>
+                <p className="text-sm text-gray-500 mt-1">请输入您的注册邮箱，我们将向您发送重置链接。</p>
+              </div>
+              
+              <div className="space-y-4">
+                 <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500">邮箱地址</label>
+                    <input 
+                      type="email" 
+                      placeholder="name@example.com"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:bg-white focus:border-black focus:outline-none transition-colors"
+                    />
+                 </div>
+              </div>
+
+              <div className="mt-8 flex gap-3">
+                <button 
+                  onClick={() => setShowForgotPassword(false)} 
+                  className="flex-1 px-4 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={handleForgotPassword} 
+                  disabled={!forgotEmail || isSendingReset} 
+                  className="flex-1 px-4 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSendingReset ? '发送中...' : '发送重置邮件'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+        {showResetSuccess && (
+          <motion.div
+             key="reset-success"
+             initial={{ opacity: 0, scale: 0.9, y: 20 }}
+             animate={{ opacity: 1, scale: 1, y: 0 }}
+             exit={{ opacity: 0, scale: 0.9, y: 20 }}
+             className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] bg-white px-8 py-6 rounded-2xl shadow-2xl border border-gray-100 flex flex-col items-center gap-4 min-w-[300px]"
+          >
+             <motion.div 
+               initial={{ scale: 0, rotate: -180 }}
+               animate={{ scale: 1, rotate: 0 }}
+               transition={{ type: "spring", stiffness: 200, damping: 15 }}
+               className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600"
+             >
+               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+             </motion.div>
+             <div className="text-center">
+               <h3 className="text-xl font-bold text-gray-900 mb-1">邮件已发送</h3>
+               <p className="text-gray-500 text-sm">请检查您的邮箱 {forgotEmail}</p>
+             </div>
+             <motion.div
+               initial={{ width: 0 }}
+               animate={{ width: "100%" }}
+               transition={{ duration: 3 }}
+               className="h-1 bg-green-500 rounded-full w-full mt-2"
+             />
+          </motion.div>
+        )}
       </AnimatePresence>
 
       <div className="max-w-[1400px] mx-auto">
@@ -496,15 +645,50 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                     </div>
 
                     {favoriteTemplates.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                        {favoriteTemplates.map(tpl => (
-                          <TemplateCard 
-                            key={tpl.id} 
-                            template={tpl} 
-                            onClick={onTemplateClick} 
-                          />
-                        ))}
-                      </div>
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                          {favoriteTemplates
+                            .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                            .map(tpl => (
+                            <TemplateCard 
+                              key={tpl.id} 
+                              template={tpl} 
+                              onClick={onTemplateClick} 
+                            />
+                          ))}
+                        </div>
+                        
+                        {Math.ceil(favoriteTemplates.length / itemsPerPage) > 1 && (
+                          <div className="flex justify-center items-center mt-12">
+                             <ConfigProvider
+                                theme={{
+                                  token: {
+                                    colorPrimary: '#000000',
+                                    borderRadius: 8,
+                                    colorBgContainer: '#ffffff',
+                                  },
+                                  components: {
+                                    Pagination: {
+                                      itemActiveBg: '#000000',
+                                      itemActiveColor: '#ffffff',
+                                    }
+                                  }
+                                }}
+                             >
+                                <Pagination
+                                  current={currentPage}
+                                  total={favoriteTemplates.length}
+                                  pageSize={itemsPerPage}
+                                  onChange={(page) => {
+                                    setCurrentPage(page);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  showSizeChanger={false}
+                                />
+                             </ConfigProvider>
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <div className="text-center py-20 border border-dashed border-gray-200 rounded-2xl bg-gray-50/50">
                          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
@@ -521,31 +705,162 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                {/* --- DOWNLOADS TAB --- */}
                {activeTab === 'downloads' && (
                  <div className="space-y-8">
-                    <div>
-                       <h3 className="text-2xl font-serif font-bold mb-1">下载历史</h3>
-                       <p className="text-gray-400 text-sm">查看您已购买和下载的资源。</p>
+                    {/* Header & Controls */}
+                    <div className="flex flex-col gap-6">
+                       <div>
+                          <h3 className="text-2xl font-serif font-bold mb-1">下载历史</h3>
+                          <p className="text-gray-400 text-sm">查看您已购买和下载的资源。</p>
+                       </div>
+
+                       {/* Search & Filter Bar */}
+                       <div className="flex flex-col md:flex-row gap-4">
+                          <div className="flex-1 relative">
+                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                             </div>
+                             <input 
+                               type="text"
+                               placeholder="输入关键词查找..."
+                               value={downloadSearch}
+                               onChange={(e) => setDownloadSearch(e.target.value)}
+                               className="w-full bg-white border border-gray-200 h-10 pl-10 pr-4 rounded-lg focus:outline-none focus:border-black text-sm font-medium placeholder:text-gray-400 transition-colors"
+                             />
+                          </div>
+                          <div className="w-full md:w-48 relative">
+                             <div className="relative">
+                               <button 
+                                  onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
+                                  className="w-full h-10 px-4 bg-white border border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:border-black cursor-pointer text-gray-600 hover:text-black transition-colors flex items-center justify-between"
+                                >
+                                  <span>{downloadFilter === 'all' ? '请选择类型' : downloadFilter}</span>
+                                  <svg className={`w-4 h-4 transition-transform ${isFilterMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"/></svg>
+                                </button>
+
+                                <AnimatePresence>
+                                  {isFilterMenuOpen && (
+                                    <motion.div
+                                      initial={{ opacity: 0, y: 10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, y: 10 }}
+                                      className="absolute right-0 top-full mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden z-50"
+                                    >
+                                      {[
+                                        { value: 'all', label: '全部' },
+                                        { value: '作品集', label: '作品集' },
+                                        { value: '电商零售', label: '电商零售' },
+                                        { value: '博客资讯', label: '博客资讯' },
+                                        { value: '后台管理', label: '后台管理' },
+                                        { value: '落地页推广', label: '落地页推广' }
+                                      ].map((option) => (
+                                        <button
+                                          key={option.value}
+                                          onClick={() => {
+                                            setDownloadFilter(option.value);
+                                            setIsFilterMenuOpen(false);
+                                          }}
+                                          className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors ${downloadFilter === option.value ? 'bg-gray-50 text-black font-medium' : 'text-gray-600'}`}
+                                        >
+                                          {option.label}
+                                        </button>
+                                      ))}
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                             </div>
+                          </div>
+                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                       {downloadRecords.length > 0 ? (
-                         downloadRecords.map(record => (
-                           <div key={record.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
-                              <div className="flex items-center gap-4">
-                                 <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500">
-                                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
-                                 </div>
-                                 <div>
-                                    <h4 className="font-bold text-gray-900">{record.templateTitle}</h4>
-                                    <p className="text-xs text-gray-400">下载于 {record.date}</p>
-                                 </div>
-                              </div>
-                              <button className="px-4 py-2 text-xs font-bold uppercase border border-gray-200 rounded-lg hover:bg-black hover:text-white hover:border-black transition-colors">
-                                再次下载
-                              </button>
-                           </div>
-                         ))
-                       ) : (
-                         <p className="text-gray-400 text-sm text-center py-10">暂无下载记录。</p>
+                    {/* Table View */}
+                    <div className="border border-gray-100 rounded-2xl overflow-hidden flex flex-col justify-between min-h-[800px] bg-white">
+                       <div className="flex-1">
+                           <Table
+                              dataSource={filteredDownloads.slice((downloadPage - 1) * downloadPageSize, downloadPage * downloadPageSize)}
+                              rowKey="id"
+                              pagination={false}
+                              columns={[
+                            {
+                              title: '标题',
+                              dataIndex: 'templateTitle',
+                              key: 'templateTitle',
+                              align: 'center',
+                              render: (text, record: any) => (
+                                <div className="flex items-center justify-center gap-4">
+                                   <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
+                                     {record.imageUrl ? (
+                                       <img src={record.imageUrl} alt={record.templateTitle} className="w-full h-full object-cover" />
+                                     ) : (
+                                       <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                                       </div>
+                                     )}
+                                   </div>
+                                   <span className="font-bold text-gray-900 line-clamp-1 max-w-[200px] text-left" title={record.templateTitle}>{record.templateTitle}</span>
+                                </div>
+                              )
+                            },
+                            {
+                              title: '类型',
+                              dataIndex: 'category',
+                              key: 'category',
+                              align: 'center',
+                              render: (text) => (
+                                <span className="px-3 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-600">
+                                  {text}
+                                </span>
+                              )
+                            },
+                            {
+                              title: '下载时间',
+                              dataIndex: 'date',
+                              key: 'date',
+                              align: 'center',
+                              render: (text) => (
+                                <span className="text-sm text-gray-500 font-mono">{text.split(' ')[0]}</span>
+                              )
+                            },
+                            {
+                              title: '操作',
+                              key: 'action',
+                              align: 'center',
+                              render: () => (
+                                <div className="flex justify-center">
+                                  <button className="px-4 py-2 bg-white border border-gray-200 text-xs font-bold uppercase rounded-lg hover:border-black hover:bg-black hover:text-white transition-all shadow-sm">
+                                    下载
+                                  </button>
+                                </div>
+                              )
+                            }
+                          ]}
+                       />
+                       </div>
+
+                       {filteredDownloads.length > downloadPageSize && (
+                         <div className="flex justify-center py-6 border-t border-gray-100">
+                             <ConfigProvider
+                                theme={{
+                                  token: {
+                                    colorPrimary: '#000000',
+                                    borderRadius: 8,
+                                    colorBgContainer: '#ffffff',
+                                  },
+                                  components: {
+                                    Pagination: {
+                                      itemActiveBg: '#000000',
+                                      itemActiveColor: '#ffffff',
+                                    }
+                                  }
+                                }}
+                             >
+                                <Pagination
+                                  current={downloadPage}
+                                  total={filteredDownloads.length}
+                                  pageSize={downloadPageSize}
+                                  onChange={(page) => setDownloadPage(page)}
+                                  showSizeChanger={false}
+                                />
+                             </ConfigProvider>
+                         </div>
                        )}
                     </div>
                  </div>
@@ -671,9 +986,17 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                           className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:bg-white focus:border-black focus:outline-none transition-colors"
                         />
                       </div>
-                      <button className="px-6 py-2 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors">
-                        更新密码
-                      </button>
+                      <div className="flex gap-4 pt-2">
+                        <button className="px-6 py-2 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors">
+                          更新密码
+                        </button>
+                        <button 
+                          onClick={() => setShowForgotPassword(true)}
+                          className="px-6 py-2 bg-white border border-gray-200 text-gray-600 rounded-full font-medium hover:bg-gray-50 transition-colors"
+                        >
+                          忘记密码
+                        </button>
+                      </div>
                    </div>
 
                    <div className="pt-10 border-t border-gray-100">

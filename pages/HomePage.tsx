@@ -193,7 +193,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 ref={scrollContainerRef}
                 className="flex items-center gap-2 overflow-x-auto max-w-[calc(100vw-40px)] md:max-w-xl pb-4 mask-image-linear-gradient-to-r [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-gray-300"
               >
-                {['全部', '免费', ...CATEGORIES].map(cat => (
+                {['全部', '免费', ...CATEGORIES].slice(0, 5).map(cat => (
                   <button
                     key={cat}
                     onClick={() => setActiveCategory(cat)}
@@ -206,18 +206,6 @@ export const HomePage: React.FC<HomePageProps> = ({
                     {cat}
                   </button>
                 ))}
-                
-                <button 
-                   onClick={() => setIsFilterOpen(!isFilterOpen)}
-                   className={`whitespace-nowrap flex items-center gap-1 px-5 py-1.5 rounded-full text-sm transition-all duration-300 border ${
-                     isFilterOpen 
-                       ? 'bg-gray-100 text-black border-gray-200' 
-                       : 'bg-white text-gray-500 border-gray-200 hover:border-gray-400 hover:text-black'
-                   }`}
-                >
-                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                   <span>更多</span>
-                </button>
               </div>
            </div>
 
@@ -231,18 +219,8 @@ export const HomePage: React.FC<HomePageProps> = ({
                    placeholder="搜索模版..." 
                    value={textSearch}
                    onChange={(e) => setTextSearch(e.target.value)}
-                   className="w-full pl-9 pr-12 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-black transition-all placeholder-gray-400"
+                   className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-black transition-all placeholder-gray-400"
                  />
-                 {/* Filter Toggle Inside Search Bar */}
-                 <button 
-                   onClick={() => setIsFilterOpen(!isFilterOpen)}
-                   className={`absolute inset-y-0 right-0 px-3 flex items-center hover:text-black transition-colors ${activeFiltersCount > 0 || isFilterOpen ? 'text-orange-500' : 'text-gray-400'}`}
-                 >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-                    {activeFiltersCount > 0 && (
-                      <span className="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full border border-white" />
-                    )}
-                 </button>
               </div>
 
               <div className="relative">
@@ -283,6 +261,21 @@ export const HomePage: React.FC<HomePageProps> = ({
                   )}
                 </AnimatePresence>
               </div>
+
+              <button 
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={`relative flex items-center justify-center px-3 py-2 bg-white border rounded-lg transition-colors ${
+                  isFilterOpen || activeFiltersCount > 0
+                    ? 'border-black text-black shadow-sm' 
+                    : 'border-gray-200 text-gray-500 hover:border-black hover:text-black'
+                }`}
+                title="筛选"
+              >
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                 {activeFiltersCount > 0 && (
+                   <span className="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full border border-white" />
+                 )}
+              </button>
            </div>
          </div>
 

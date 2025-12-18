@@ -118,11 +118,18 @@ export const config = {
         }
       ],
       demoVideoUrl: 'https://cdn.coverr.co/videos/coverr-analyzing-graphs-on-screen-5473/1080p.mp4',
-      screenshots: [
+      screenshots: i % 2 === 0 ? [
         { url: `https://picsum.photos/1200/800?random=${i + 200}`, caption: 'Dashboard Overview', device: 'desktop' },
         { url: `https://picsum.photos/400/800?random=${i + 300}`, caption: 'Mobile Menu', device: 'mobile' },
         { url: `https://picsum.photos/1200/800?random=${i + 400}`, caption: 'Analytics View', device: 'desktop' },
-        { url: `https://picsum.photos/1200/800?random=${i + 500}`, caption: 'Settings Panel', device: 'desktop' }
+        { url: `https://picsum.photos/1200/800?random=${i + 500}`, caption: 'Settings Panel', device: 'desktop' },
+        { url: `https://picsum.photos/1200/800?random=${i + 600}`, caption: 'User Profile', device: 'desktop' },
+        { url: `https://picsum.photos/400/800?random=${i + 700}`, caption: 'Login Screen', device: 'mobile' },
+        { url: `https://picsum.photos/1200/800?random=${i + 800}`, caption: 'Data Grid', device: 'desktop' }
+      ] : [
+        { url: `https://picsum.photos/1200/800?random=${i + 200}`, caption: 'Dashboard Overview', device: 'desktop' },
+        { url: `https://picsum.photos/400/800?random=${i + 300}`, caption: 'Mobile Menu', device: 'mobile' },
+        { url: `https://picsum.photos/1200/800?random=${i + 400}`, caption: 'Analytics View', device: 'desktop' }
       ],
       featureHighlights: [
         {

@@ -22,7 +22,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
   onDownload
 }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'details' | 'code' | 'reviews'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'reviews'>('details');
   const [isDownloading, setIsDownloading] = useState(false);
   const [showDownloadPopup, setShowDownloadPopup] = useState(false);
   const [showFavoritePopup, setShowFavoritePopup] = useState(false);
@@ -202,7 +202,6 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
 
   const tabNames = {
     details: '详情',
-    code: '配置代码',
     reviews: '评价'
   };
 
@@ -260,7 +259,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
       {/* Back Button */}
       <div className="max-w-[1400px] mx-auto px-6 mb-8">
         <button 
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
           className="group flex items-center gap-2 text-gray-500 hover:text-black transition-colors"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
@@ -283,9 +282,27 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
               <h1 className="text-4xl md:text-6xl font-serif font-bold tracking-tight text-gray-900">
                 {template.title}
               </h1>
-              <div className="flex items-baseline gap-2">
+              <div className="flex items-center gap-3">
                 <span className="text-3xl font-bold text-gray-900">¥{template.price}</span>
-                <span className="text-gray-400 text-sm">/ 永久授权</span>
+                {template.serviceTags && template.serviceTags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {template.serviceTags.map((tag, idx) => {
+                      const colorMap = {
+                        green: 'bg-green-500',
+                        blue: 'bg-blue-500',
+                        purple: 'bg-purple-500',
+                        orange: 'bg-orange-500',
+                        red: 'bg-red-500'
+                      };
+                      return (
+                        <div key={idx} className="flex items-center gap-2 text-sm font-medium text-gray-600 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
+                          <span className={`w-2 h-2 rounded-full ${colorMap[tag.color] || 'bg-gray-500'}`}></span>
+                          <span>{tag.label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
            </div>
            
@@ -334,7 +351,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
             
             {/* Tabs */}
             <div className="flex items-center gap-8 border-b border-gray-100 pb-1">
-              {(['details', 'code', 'reviews'] as const).map(tab => (
+              {(['details', 'reviews'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -374,31 +391,11 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                                 <p className="text-sm text-gray-500">From {template.author}</p>
                               </div>
                            </div>
-                           <p className="text-lg md:text-xl font-serif leading-relaxed text-gray-800 mb-6">
+                           <p className="text-base md:text-lg font-serif leading-relaxed text-gray-800 mb-6">
                              "{template.description} 我们致力于创造不仅美观，而且在实际开发中极其易用的工具。每一个像素都经过精心考量，只为助您打造卓越的数字产品。"
                            </p>
                            
-                           {/* Dynamic Service Tags */}
-                           {template.serviceTags && template.serviceTags.length > 0 && (
-                             <div className="flex flex-wrap gap-4">
-                               {template.serviceTags.map((tag, idx) => {
-                                 const colorMap = {
-                                   green: 'bg-green-500',
-                                   blue: 'bg-blue-500',
-                                   purple: 'bg-purple-500',
-                                   orange: 'bg-orange-500',
-                                   red: 'bg-red-500'
-                                 };
-                                 
-                                 return (
-                                   <div key={idx} className="flex items-center gap-2 text-sm font-medium text-gray-600 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
-                                     <span className={`w-2 h-2 rounded-full ${colorMap[tag.color] || 'bg-gray-500'}`}></span>
-                                     <span>{tag.label}</span>
-                                   </div>
-                                 );
-                               })}
-                             </div>
-                           )}
+
 
                            {/* Usage Steps */}
                            {template.usageSteps && template.usageSteps.length > 0 && (
@@ -454,7 +451,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                   </motion.div>
                 )}
 
-                {activeTab === 'code' && (
+                {/* {activeTab === 'code' && (
                    <motion.div
                      key="code"
                      initial={{ opacity: 0, y: 10 }}
@@ -472,7 +469,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                        </pre>
                      </div>
                    </motion.div>
-                )}
+                )} */}
 
                 {activeTab === 'reviews' && (
                   <motion.div

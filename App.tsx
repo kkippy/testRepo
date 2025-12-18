@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Template, SortOption, UserProfile as UserProfileType, Transaction, DownloadRecord } from './types';
-import { SearchOverlay } from './components/SearchOverlay';
 import { Confetti } from './components/Confetti';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -38,7 +37,7 @@ const App: React.FC = () => {
     credits: 1250
   });
   
-  const [favorites, setFavorites] = useState<string[]>(['tpl-0', 'tpl-2', 'tpl-5']);
+  const [favorites, setFavorites] = useState<string[]>(['tpl-0', 'tpl-2', 'tpl-5', 'tpl-6', 'tpl-7', 'tpl-8', 'tpl-9', 'tpl-10', 'tpl-11']);
   const [downloadRecords, setDownloadRecords] = useState<DownloadRecord[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([
     { id: 't1', type: 'recharge', amount: 500, date: '2024-05-20', description: '钱包充值' },
@@ -137,14 +136,6 @@ const App: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Global Components */}
-      <SearchOverlay
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onSearch={handleSmartSearch}
-        isSearching={isSearching}
-      />
 
       {/* Header is visible on all pages except maybe login? Or conditionally rendered. 
           Current design had header always visible except for Auth view.

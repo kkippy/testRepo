@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Template } from '../types';
 
@@ -8,6 +8,7 @@ interface TemplateGalleryProps {
 
 export const TemplateGallery: React.FC<TemplateGalleryProps> = ({ template }) => {
   const [selectedMedia, setSelectedMedia] = useState<{ type: 'video' | 'image'; url: string; caption?: string } | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Initialize with video or main image
   useEffect(() => {
@@ -17,6 +18,35 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({ template }) =>
       setSelectedMedia({ type: 'image', url: template.imageUrl, caption: '主预览图' });
     }
   }, [template]);
+
+  const totalItems = (template.demoVideoUrl ? 1 : 0) + (template.screenshots?.length || 0);
+  const isScrollable = totalItems > 5;
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    
+    const handleWheel = (e: WheelEvent) => {
+      // Only handle if content is actually scrollable horizontally
+      if (container  && e.deltaY !== 0) {
+        // Prevent default vertical scrolling
+        e.preventDefault();
+        // Normalize scroll speed for different browsers (Firefox uses deltaMode 1)
+        // const delta = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaY;
+        // container.scrollLeft += delta;
+        container.scrollLeft += e.deltaY;
+      }
+    };
+
+    // if (container && isScrollable) {
+    //   container.addEventListener('wheel', handleWheel, { passive: false });
+    // }
+    
+    return () => {
+      if (container) {
+        container.removeEventListener('wheel', handleWheel);
+      }
+    };
+  }, [isScrollable]);
 
   if (!selectedMedia) return null;
 
@@ -61,12 +91,18 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({ template }) =>
       </div>
 
       {/* Thumbnails Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div 
+        ref={scrollContainerRef}
+        className={isScrollable 
+          ? "flex gap-4 overflow-x-auto pb-4 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300"
+          : "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"
+        }
+      >
         {/* Main Video Thumbnail */}
         {template.demoVideoUrl && (
             <button
             onClick={() => setSelectedMedia({ type: 'video', url: template.demoVideoUrl!, caption: '演示视频' })}
-            className={`group flex flex-col gap-2 text-left transition-all ${selectedMedia.url === template.demoVideoUrl ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
+            className={`group flex flex-col gap-2 text-left transition-all ${selectedMedia.url === template.demoVideoUrl ? 'opacity-100' : 'opacity-60 hover:opacity-100'} ${isScrollable ? 'flex-shrink-0 w-60' : ''}`}
             >
             <div className={`aspect-video rounded-lg overflow-hidden border-2 ${selectedMedia.url === template.demoVideoUrl ? 'border-black' : 'border-transparent group-hover:border-gray-300'} relative`}>
                 <video src={template.demoVideoUrl} className="w-full h-full object-cover pointer-events-none" />
@@ -85,7 +121,7 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({ template }) =>
         <button
             key={index}
             onClick={() => setSelectedMedia({ type: 'image', url: shot.url, caption: shot.caption })}
-            className={`group flex flex-col gap-2 text-left transition-all ${selectedMedia.url === shot.url ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
+            className={`group flex flex-col gap-2 text-left transition-all ${selectedMedia.url === shot.url ? 'opacity-100' : 'opacity-60 hover:opacity-100'} ${isScrollable ? 'flex-shrink-0 w-60' : ''}`}
         >
             <div className={`aspect-video rounded-lg overflow-hidden border-2 ${selectedMedia.url === shot.url ? 'border-black' : 'border-transparent group-hover:border-gray-300'}`}>
             <img src={shot.url} alt={shot.caption} className="w-full h-full object-cover" />
