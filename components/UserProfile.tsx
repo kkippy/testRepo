@@ -146,6 +146,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
   const [editName, setEditName] = useState(user.name);
   const [editBio, setEditBio] = useState(user.bio);
+  const [editExpertise, setEditExpertise] = useState<string[]>(user.expertise || []);
+  const [editSkills, setEditSkills] = useState<{ name: string; level: number }[]>(user.skills || []);
+  const [editSocialLinks, setEditSocialLinks] = useState(user.socialLinks || {});
   const [isEditing, setIsEditing] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -234,7 +237,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   }, [favoriteTemplates.length]);
 
   const handleSaveProfile = () => {
-    onUpdateProfile({ name: editName, bio: editBio });
+    onUpdateProfile({ 
+      name: editName, 
+      bio: editBio,
+      expertise: editExpertise,
+      skills: editSkills,
+      socialLinks: editSocialLinks
+    });
     setIsEditing(false);
   };
 
@@ -544,11 +553,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                      label="下载历史" 
                      icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>} 
                    />
-                   <TabButton 
+                   {/* <TabButton 
                      id="wallet" 
                      label="积分钱包" 
                      icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>} 
-                   />
+                   /> */}
                    <TabButton 
                      id="security" 
                      label="账号安全" 
@@ -605,6 +614,194 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                             rows={4}
                             className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:bg-white focus:border-black focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed resize-none"
                           />
+                       </div>
+
+                       {/* --- Professional Profile --- */}
+                       <div className="pt-6 border-t border-gray-100">
+                          <h4 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4">职业档案</h4>
+                          
+                          {/* Expertise */}
+                          <div className="mb-6">
+                            <label className="block text-xs font-bold text-gray-400 mb-2">擅长领域</label>
+                            {isEditing ? (
+                              <div className="flex flex-wrap gap-2">
+                                {editExpertise.map((tag) => (
+                                  <span key={tag} className="px-3 py-1 bg-black text-white rounded-full text-sm flex items-center gap-2">
+                                    {tag}
+                                    <button onClick={() => setEditExpertise(prev => prev.filter(t => t !== tag))} className="hover:text-gray-300">×</button>
+                                  </span>
+                                ))}
+                                <input 
+                                  type="text" 
+                                  placeholder="+ 添加 (回车)" 
+                                  className="px-3 py-1 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-black min-w-[120px]"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      const val = e.currentTarget.value.trim();
+                                      if (val && !editExpertise.includes(val)) {
+                                        setEditExpertise([...editExpertise, val]);
+                                        e.currentTarget.value = '';
+                                      }
+                                    }
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex flex-wrap gap-2">
+                                {user.expertise?.map((tag) => (
+                                  <span key={tag} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
+                                    {tag}
+                                  </span>
+                                ))}
+                                {(!user.expertise || user.expertise.length === 0) && <span className="text-gray-400 text-sm italic">未填写</span>}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Skills */}
+                           <div>
+                             <label className="block text-xs font-bold text-gray-400 mb-2">软件技能</label>
+                             <div className="flex flex-wrap gap-3">
+                               {(isEditing ? editSkills : user.skills || []).map((skill, index) => (
+                                 <div 
+                                   key={index} 
+                                   className="w-[50px] h-[50px] rounded-[6px] bg-white border border-gray-100 shadow-sm flex items-center justify-center relative group hover:shadow-md transition-all cursor-default"
+                                   title={`${skill.name} (${skill.level}%)`}
+                                 >
+                                    {/* Icon Generation Logic */}
+                                    {(() => {
+                                      const lower = skill.name.toLowerCase();
+                                      if (lower.includes('figma')) {
+                                        return (
+                                          <svg width="24" height="24" viewBox="0 0 38 57" fill="none">
+                                            <path d="M19 28.5C19 25.9804 20.0009 23.5641 21.7825 21.7825C23.5641 20.0009 25.9804 19 28.5 19C31.0196 19 33.4359 20.0009 35.2175 21.7825C36.9991 23.5641 38 25.9804 38 28.5C38 31.0196 36.9991 33.4359 35.2175 35.2175C33.4359 36.9991 31.0196 38 28.5 38L19 38V28.5Z" fill="#1ABCFE"/>
+                                            <path d="M9.5 57C12.0196 57 14.4359 56.0009 16.2175 54.2175C17.9991 52.4359 19 50.0196 19 47.5V38H9.5C6.98044 38 4.56408 36.9991 2.78249 35.2175C1.00089 33.4359 0 31.0196 0 28.5C0 25.9804 1.00089 23.5641 2.78249 21.7825C4.56408 20.0009 6.98044 19 9.5 19H19V9.5C19 6.98044 17.9991 4.56408 16.2175 2.78249C14.4359 1.00089 12.0196 0 9.5 0C6.98044 0 4.56408 1.00089 2.78249 2.78249C1.00089 4.56408 0 6.98044 0 9.5C0 12.0196 1.00089 14.4359 2.78249 16.2175C4.56408 17.9991 6.98044 19 9.5 19Z" fill="#0ACF83"/>
+                                            <path d="M19 0V19H28.5C31.0196 19 33.4359 17.9991 35.2175 16.2175C36.9991 14.4359 38 12.0196 38 9.5C38 6.98044 36.9991 4.56408 35.2175 2.78249C33.4359 1.00089 31.0196 0 28.5 0H19Z" fill="#FF7262"/>
+                                            <path d="M0 28.5C0 31.0196 1.00089 33.4359 2.78249 35.2175C4.56408 36.9991 6.98044 38 9.5 38H19V28.5H9.5C6.98044 28.5 4.56408 27.4991 2.78249 25.7175C1.00089 23.9359 0 21.5196 0 19C0 21.5196 0 28.5 0 28.5Z" fill="#A259FF"/>
+                                            <path d="M19 28.5V47.5C19 50.0196 17.9991 52.4359 16.2175 54.2175C14.4359 56.0009 12.0196 57 9.5 57C6.98044 57 4.56408 56.0009 2.78249 54.2175C1.00089 52.4359 0 50.0196 0 47.5C0 44.9804 1.00089 42.5641 2.78249 40.7825C4.56408 39.0009 6.98044 38 9.5 38H19V28.5Z" fill="#F24E1E"/>
+                                          </svg>
+                                        );
+                                      }
+                                      if (lower.includes('react')) {
+                                        return (
+                                          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#61DAFB" strokeWidth="2">
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                            <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(30 12 12)"></ellipse>
+                                            <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)"></ellipse>
+                                          </svg>
+                                        );
+                                      }
+                                      if (lower.includes('typescript') || lower === 'ts') {
+                                        return <div className="w-full h-full bg-[#3178C6] text-white flex items-center justify-center font-bold text-lg rounded-[6px]">TS</div>;
+                                      }
+                                      if (lower.includes('javascript') || lower === 'js') {
+                                        return <div className="w-full h-full bg-[#F7DF1E] text-black flex items-center justify-center font-bold text-lg rounded-[6px]">JS</div>;
+                                      }
+                                      if (['ps', 'photoshop'].some(k => lower.includes(k))) return <div className="w-full h-full bg-[#001E36] text-[#31A8FF] flex items-center justify-center font-bold text-lg border-2 border-[#31A8FF] rounded-[6px]">Ps</div>;
+                                      if (['ai', 'illustrator'].some(k => lower.includes(k))) return <div className="w-full h-full bg-[#330000] text-[#FF9A00] flex items-center justify-center font-bold text-lg border-2 border-[#FF9A00] rounded-[6px]">Ai</div>;
+                                      if (['id', 'indesign'].some(k => lower.includes(k))) return <div className="w-full h-full bg-[#2D001E] text-[#FF3366] flex items-center justify-center font-bold text-lg border-2 border-[#FF3366] rounded-[6px]">Id</div>;
+                                      
+                                      return <div className="text-gray-400 font-bold text-sm uppercase">{skill.name.slice(0, 2)}</div>;
+                                    })()}
+
+                                   {isEditing && (
+                                      <button 
+                                        onClick={() => setEditSkills(prev => prev.filter((_, i) => i !== index))} 
+                                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                                      >
+                                        ×
+                                      </button>
+                                   )}
+                                 </div>
+                               ))}
+
+                               {isEditing && (
+                                 <div className="flex flex-col gap-2">
+                                   <input 
+                                     type="text" 
+                                     placeholder="添加技能..." 
+                                     className="w-[100px] h-[50px] px-2 bg-gray-50 border border-gray-200 border-dashed rounded-[6px] text-xs text-center focus:outline-none focus:border-black focus:bg-white transition-all"
+                                     onKeyDown={(e) => {
+                                       if (e.key === 'Enter') {
+                                         const val = e.currentTarget.value.trim();
+                                         if (val) {
+                                           setEditSkills([...editSkills, { name: val, level: 80 }]);
+                                           e.currentTarget.value = '';
+                                         }
+                                       }
+                                     }}
+                                   />
+                                 </div>
+                               )}
+                               {!isEditing && (!user.skills || user.skills.length === 0) && <span className="text-gray-400 text-sm italic">未填写</span>}
+                             </div>
+                           </div>
+                       </div>
+
+                       {/* --- Social & Links --- */}
+                       <div className="pt-6 border-t border-gray-100">
+                          <h4 className="text-sm font-bold uppercase tracking-wider text-gray-500 mb-4">社交与链接</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             {/* Website */}
+                             <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-600">
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                </div>
+                                {isEditing ? (
+                                  <input 
+                                    type="text"
+                                    value={editSocialLinks.website || ''}
+                                    onChange={(e) => setEditSocialLinks({...editSocialLinks, website: e.target.value})}
+                                    placeholder="个人网站链接"
+                                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:bg-white focus:border-black focus:outline-none transition-colors"
+                                  />
+                                ) : (
+                                  <a href={user.socialLinks?.website || '#'} target="_blank" rel="noopener noreferrer" className={`text-sm font-medium ${user.socialLinks?.website ? 'text-black hover:underline' : 'text-gray-400 pointer-events-none'}`}>
+                                    {user.socialLinks?.website || '未设置'}
+                                  </a>
+                                )}
+                             </div>
+
+                             {/* Dribbble */}
+                             <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-[#ea4c89]/10 flex items-center justify-center text-[#ea4c89]">
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-5.38c-3.72-3.8-10.64-4.27-16.63-1.43m4.89-12.06c2.53 4.29 2.53 10.96 0 15.24"></path></svg>
+                                </div>
+                                {isEditing ? (
+                                  <input 
+                                    type="text"
+                                    value={editSocialLinks.dribbble || ''}
+                                    onChange={(e) => setEditSocialLinks({...editSocialLinks, dribbble: e.target.value})}
+                                    placeholder="Dribbble 用户名"
+                                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:bg-white focus:border-black focus:outline-none transition-colors"
+                                  />
+                                ) : (
+                                  <a href={`https://dribbble.com/${user.socialLinks?.dribbble}`} target="_blank" rel="noopener noreferrer" className={`text-sm font-medium ${user.socialLinks?.dribbble ? 'text-black hover:underline' : 'text-gray-400 pointer-events-none'}`}>
+                                    {user.socialLinks?.dribbble || '未设置'}
+                                  </a>
+                                )}
+                             </div>
+
+                             {/* Twitter */}
+                             <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-[#1da1f2]/10 flex items-center justify-center text-[#1da1f2]">
+                                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
+                                </div>
+                                {isEditing ? (
+                                  <input 
+                                    type="text"
+                                    value={editSocialLinks.twitter || ''}
+                                    onChange={(e) => setEditSocialLinks({...editSocialLinks, twitter: e.target.value})}
+                                    placeholder="Twitter 用户名"
+                                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:bg-white focus:border-black focus:outline-none transition-colors"
+                                  />
+                                ) : (
+                                  <a href={`https://twitter.com/${user.socialLinks?.twitter}`} target="_blank" rel="noopener noreferrer" className={`text-sm font-medium ${user.socialLinks?.twitter ? 'text-black hover:underline' : 'text-gray-400 pointer-events-none'}`}>
+                                    {user.socialLinks?.twitter || '未设置'}
+                                  </a>
+                                )}
+                             </div>
+                          </div>
                        </div>
                        
                        <div className="pt-4">
@@ -772,12 +969,27 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                     </div>
 
                     {/* Table View */}
-                    <div className="border border-gray-100 rounded-2xl overflow-hidden flex flex-col justify-between min-h-[800px] bg-white">
+                    <div className="border border-gray-100 border-b-0 rounded-2xl overflow-hidden flex flex-col justify-between min-h-[600px] bg-white">
                        <div className="flex-1">
                            <Table
                               dataSource={filteredDownloads.slice((downloadPage - 1) * downloadPageSize, downloadPage * downloadPageSize)}
                               rowKey="id"
                               pagination={false}
+                              locale={{
+                                emptyText: (
+                                  <div className="flex flex-col items-center justify-center py-24">
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2 font-serif">还没有下载记录哦 ~</h3>
+                                    <p className="text-gray-400 text-sm mb-8">遇见心动的模版，就把它带回家吧！</p>
+                                    <button 
+                                      onClick={onHome}
+                                      className="px-8 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl active:scale-95 flex items-center gap-2"
+                                    >
+                                      <span>探索商城</span>
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                    </button>
+                                  </div>
+                                )
+                              }}
                               columns={[
                             {
                               title: '标题',

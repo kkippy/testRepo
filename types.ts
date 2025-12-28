@@ -33,6 +33,7 @@ export interface Template {
   imageUrl: string;
   tags: string[];
   rating: number;
+  downloadCount: number;
   dslCode: string;
   previewUrl: string;
   reviews: Review[];
@@ -67,6 +68,13 @@ export interface UserProfile {
   bio: string;
   avatar: string; // Initials or URL
   credits: number;
+  expertise?: string[];
+  skills?: { name: string; level: number }[];
+  socialLinks?: {
+    website?: string;
+    dribbble?: string;
+    twitter?: string;
+  };
 }
 
 export interface Transaction {

@@ -34,7 +34,18 @@ const App: React.FC = () => {
     email: 'user@example.com',
     bio: '热爱设计与极简主义的开发者。',
     avatar: 'D',
-    credits: 1250
+    credits: 1250,
+    expertise: ['UI设计', 'React开发'],
+    skills: [
+      { name: 'Figma', level: 90 },
+      { name: 'React', level: 85 },
+      { name: 'TypeScript', level: 80 }
+    ],
+    socialLinks: {
+      website: 'https://design.io',
+      dribbble: 'design_enthusiast',
+      twitter: '@design_eth'
+    }
   });
   
   const [favorites, setFavorites] = useState<string[]>(['tpl-0', 'tpl-2', 'tpl-5', 'tpl-6', 'tpl-7', 'tpl-8', 'tpl-9', 'tpl-10', 'tpl-11']);

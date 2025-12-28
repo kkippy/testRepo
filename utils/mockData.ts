@@ -83,6 +83,7 @@ export const config = {
       imageUrl: `https://picsum.photos/1200/750?random=${i + 100}`,
       tags: tagsList[i % tagsList.length],
       rating: 4 + (i % 10) / 10,
+      downloadCount: 100 + i * 42,
       dslCode: dslCode,
       previewUrl: '#',
       reviews: [
